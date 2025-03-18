@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   SafeAreaView,
   Text,
@@ -22,6 +22,16 @@ const LoginScreen = () => {
   const [loginStatus, setLoginStatus] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userType, setUserType] = useState(null);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const isAuthenticated = localStorage.getItem("isAuthenticated");
+    const storedUserType = localStorage.getItem("userType");
+    if (isAuthenticated && storedUserType) {
+      setIsLoggedIn(true);
+      setUserType(storedUserType);
+    }
+  }, []);
 
   const API_URL = Platform.select({
     native: "http://10.0.2.2/lifthub/connect.php",
@@ -55,11 +65,13 @@ const LoginScreen = () => {
       console.log("Login response:", result);
 
       if (result.success) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem("userType", result.userType); // Store user type if needed
         setLoginStatus("Login successful!");
         setUserType(result.userType);
         setIsLoggedIn(true);
       } else {
-        setLoginStatus(result.message);
+        setLoginStatus(result.message || "Login failed");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -68,6 +80,13 @@ const LoginScreen = () => {
   };
 
   if (isLoggedIn) {
+    // Check current URL path to maintain the current page
+    const currentPath = window.location.pathname;
+    if (currentPath !== "/" && currentPath !== "/login") {
+      return null; // Don't redirect if we're on a different page
+    }
+
+    // Only redirect from login/root page
     if (userType === "admin") {
       return <AdminDashboard setIsLoggedIn={setIsLoggedIn} />;
     } else if (userType === "trainer") {

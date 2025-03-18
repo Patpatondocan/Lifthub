@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Camera } from "expo-camera";
-import QrReader from "react-qr-reader";
-
+import { Html5QrcodeScanner, Html5Qrcode } from "html5-qrcode";
 import {
   SafeAreaView,
   View,
@@ -38,7 +37,10 @@ const AdminDashboard = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [scannedData, setScannedData] = useState(null);
   const [isCameraActive, setIsCameraActive] = useState(true);
-  const qrReaderRef = useRef(null);
+  const [windowDimensions, setWindowDimensions] = useState(
+    Dimensions.get("window")
+  );
+  const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
     const updateLayout = () => {
@@ -49,6 +51,7 @@ const AdminDashboard = () => {
       } else {
         setIsDrawerOpen(false);
       }
+      setWindowDimensions(Dimensions.get("window")); // Update window dimensions
     };
 
     Dimensions.addEventListener("change", updateLayout);
@@ -67,30 +70,138 @@ const AdminDashboard = () => {
     }).start();
   }, [isDrawerOpen, sidebarAnimation]);
 
-  //QR Code Scanner
+  // QR Code Scanner
+  useEffect(() => {
+    let html5QrCode = null;
+
+    const initializeScanner = async () => {
+      if (Platform.OS === "web" && modalVisible) {
+        // Wait a moment for the DOM to be ready
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        const cameraContainer = document.getElementById("qr-reader");
+        if (cameraContainer) {
+          try {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCodeRef.current = html5QrCode;
+
+            const config = {
+              fps: 10,
+              qrbox: { width: 200, height: 200 }, // Fixed size for stability
+              aspectRatio: 1.0,
+              transform: "scaleX(-1)", // Mirror video feed
+            };
+
+            html5QrCode
+              .start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                  console.log("Scanned:", decodedText);
+                  setScannedData(decodedText);
+                  setNewLogName(decodedText);
+                },
+                (errorMessage) => {
+                  if (!errorMessage.includes("NotFoundException")) {
+                    console.error("QR Code Error:", errorMessage);
+                  }
+                }
+              )
+              .catch((err) => {
+                console.error("Scanner start error:", err);
+              });
+          } catch (error) {
+            console.error("Scanner initialization error:", error);
+          }
+        }
+      }
+    };
+
+    if (modalVisible) {
+      initializeScanner();
+    }
+
+    return () => {
+      if (html5QrCodeRef.current) {
+        try {
+          html5QrCodeRef.current.getState() === 2 && // 2 means SCANNING
+            html5QrCodeRef.current
+              .stop()
+              .then(() => console.log("Scanner stopped"))
+              .catch((err) => console.error("Stop error:", err));
+        } catch (error) {
+          console.log("Cleanup error (can be ignored):", error);
+        }
+        html5QrCodeRef.current = null;
+      }
+    };
+  }, [modalVisible]);
+
+  // Remove or modify the resize handler to avoid conflicts
+  useEffect(() => {
+    const handleResize = () => {
+      if (html5QrCodeRef.current && html5QrCodeRef.current.getState() === 2) {
+        // 2 means SCANNING
+        try {
+          const cameraContainer = document.getElementById("qr-reader");
+          if (cameraContainer) {
+            // Only update if scanner is running
+            html5QrCodeRef.current.applyVideoConstraints({
+              aspectRatio: 1.0,
+            });
+          }
+        } catch (error) {
+          console.log("Resize handler error (can be ignored):", error);
+        }
+      }
+    };
+
+    if (modalVisible) {
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [modalVisible]);
 
   useEffect(() => {
-    if (Platform.OS !== "web") {
-      // Request camera permissions for mobile
-      (async () => {
-        const { status } = await Camera.requestCameraPermissionsAsync();
-        setHasPermission(status === "granted");
-      })();
-    }
+    const handleResize = () => {
+      if (html5QrCodeRef.current) {
+        const cameraContainer = document.getElementById("qr-reader");
+        if (cameraContainer) {
+          const width = cameraContainer.offsetWidth;
+          const height = cameraContainer.offsetHeight;
+
+          // Update the camera dimensions
+          html5QrCodeRef.current.updateConfig({
+            qrbox: { width: width * 0.8, height: height * 0.8 },
+          });
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleScan = (data) => {
-    if (data) {
+  useEffect(() => {
+    // Check login status when component mounts
+    const checkLoginStatus = () => {
+      const isAuthenticated = localStorage.getItem("isAuthenticated");
+      if (!isAuthenticated) {
+        setIsLogOut(true);
+      }
+    };
+
+    checkLoginStatus();
+  }, []); // Empty dependency array means this runs once on mount
+
+  const handleBarCodeScanned = ({ data }) => {
+    if (isCameraActive) {
       console.log("Scanned QR:", data);
       setScannedData(data);
       setNewLogName(data); // Set the scanned data as the new log name
       setIsCameraActive(false);
       setModalVisible(true); // Show confirmation modal
     }
-  };
-
-  const handleError = (error) => {
-    console.error("QR Scanner error:", error);
   };
 
   const handleAddLog = () => {
@@ -111,18 +222,21 @@ const AdminDashboard = () => {
     setIsCameraActive(true);
   };
 
-  ////////////////////////////////////////
-
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
   if (isLogOut) {
-    return <LoginScreen />;
+    window.location.href = "/"; // Redirect to login page
+    return null;
   }
 
   const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userType");
     setIsLogOut(true);
+    // Explicitly redirect to login page
+    window.location.href = "/";
     console.log("Logging out...");
   };
 
@@ -275,58 +389,24 @@ const AdminDashboard = () => {
     </Animated.View>
   );
 
-  useEffect(() => {
-    if (Platform.OS === "web") {
-      // Initialize HTML5 QR Code Scanner for web
-      const html5QrCode = new Html5QrcodeScanner(
-        "qr-reader", // ID of the HTML element to render the scanner
-        { fps: 10, qrbox: 250 },
-        false
-      );
-
-      html5QrCodeRef.current = html5QrCode;
-
-      html5QrCode.render(
-        (data) => {
-          console.log("Scanned QR:", data);
-          setScannedData(data);
-          setNewLogName(data); // Set the scanned data as the new log name
-          setIsCameraActive(false);
-          setModalVisible(true); // Show confirmation modal
-          html5QrCode.clear(); // Stop the scanner after successful scan
-        },
-        (error) => {
-          console.error("QR Scanner error:", error);
-        }
-      );
-
-      return () => {
-        if (html5QrCodeRef.current) {
-          html5QrCodeRef.current.clear();
-        }
-      };
-    } else {
-      // Request camera permissions for mobile
-      (async () => {
-        const { status } = await Camera.requestCameraPermissionsAsync();
-        setHasPermission(status === "granted");
-      })();
-    }
-  }, []);
-
   const renderCamera = () => {
     if (Platform.OS === "web") {
+      const qrboxSize = Math.min(windowDimensions.width * 0.8, 650); // Dynamic QR box size
       return (
         <View style={styles.cameraContainer}>
-          <QrReader
-            ref={qrReaderRef}
-            delay={300}
-            onError={handleError}
-            onScan={handleScan}
-            style={{ width: "100%" }}
+          <div
+            id="qr-reader"
+            style={{
+              width: "100%", // Fill the container
+              height: "100%", // Fill the container
+              background: "#111111",
+              margin: "0 auto", // Center the scanner
+              transform: "scaleX(-1)", // Mirror video feed
+            }}
           />
           {scannedData && (
             <View style={styles.scanSuccessOverlay}>
+              <Ionicons name="checkmark-circle" size={60} color="#6397C9" />
               <Text style={styles.scanSuccessText}>Scanned: {scannedData}</Text>
             </View>
           )}
@@ -342,9 +422,7 @@ const AdminDashboard = () => {
       <Camera
         style={styles.camera}
         type={Camera.Constants.Type.back}
-        onBarCodeScanned={
-          isCameraActive ? ({ data }) => handleScan(data) : undefined
-        }
+        onBarCodeScanned={isCameraActive ? handleBarCodeScanned : undefined}
       >
         <View style={styles.cameraOverlay}>
           <View style={styles.scanFrame} />
@@ -359,10 +437,22 @@ const AdminDashboard = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {renderCamera()}
+    <SafeAreaView style={styles.container}>
+      {!isLargeScreen && (
+        <TouchableOpacity style={styles.menuButton} onPress={toggleDrawer}>
+          <Ionicons name="menu-outline" size={32} color="#6397C9" />
+        </TouchableOpacity>
+      )}
 
-      {/* Confirmation Modal */}
+      {renderSidebar()}
+
+      <View
+        style={[styles.mainContent, isLargeScreen && styles.mainContentLarge]}
+      >
+        {renderMainContent()}
+      </View>
+
+      {/* QR Scanner Modal */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -372,9 +462,9 @@ const AdminDashboard = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add Log Entry</Text>
-            <Text style={styles.modalText}>
-              Do you want to add "{newLogName}"?
-            </Text>
+
+            {/* Camera Section */}
+            {renderCamera()}
 
             {/* Manual Input Field */}
             <TextInput
@@ -402,7 +492,7 @@ const AdminDashboard = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 

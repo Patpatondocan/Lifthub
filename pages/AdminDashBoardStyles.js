@@ -1,4 +1,6 @@
-import { StyleSheet, Platform, StatusBar } from "react-native";
+// Here's the corrected styles.js file with the duplicate modal styles removed
+
+import { StyleSheet, Platform, StatusBar, Dimensions } from "react-native";
 
 const styles = StyleSheet.create({
   container: {
@@ -144,64 +146,21 @@ const styles = StyleSheet.create({
   logText: {
     color: "#FFFFFF",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#1A1A1A",
-    padding: 20,
-    borderRadius: 12,
-    width: "90%",
-    maxWidth: 400,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-  },
-  modalTitle: {
-    color: "#6397C9",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  modalInput: {
-    backgroundColor: "#111111",
-    color: "#FFFFFF",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  modalButton: {
-    backgroundColor: "#6397C9",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    elevation: 3,
-    shadowColor: "#6397C9",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  modalButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
 
-  //CAMERA STYLES
-
+  // Camera styles
   cameraContainer: {
     width: "100%",
-    height: "50%",
-    position: "relative",
+    height: 450, // Fixed height for better proportions
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#111111",
+    overflow: "hidden",
+    marginBottom: 20,
+    borderRadius: 8,
   },
   camera: {
     flex: 1,
+    width: "100%",
   },
   cameraOverlay: {
     flex: 1,
@@ -220,61 +179,77 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.7)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   scanSuccessText: {
     color: "#6397C9",
     fontSize: 18,
+    marginTop: 10,
+    textAlign: "center",
   },
   cameraText: {
     color: "#6397C9",
     fontSize: 18,
   },
+
+  // Modal styles - improved for modern look
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   modalContent: {
-    width: "80%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
+    width: Platform.OS === "web" ? "40%" : "90%",
+    maxWidth: 500,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
     padding: 20,
     alignItems: "center",
+    overflow: "hidden",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 16,
+    color: "#6397C9",
+    textAlign: "center",
     marginBottom: 20,
+    width: "100%",
   },
   modalInput: {
     width: "100%",
-    height: 40,
-    borderColor: "#6397C9",
+    height: 55,
+    backgroundColor: "#2A2A2A",
     borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
+    borderColor: "#6397C9",
+    borderRadius: 10,
+    paddingHorizontal: 15,
     marginBottom: 20,
+    fontSize: 16,
+    color: "#FFFFFF",
   },
   modalButtonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
+    marginTop: 10,
   },
   modalButton: {
     flex: 1,
     backgroundColor: "#6397C9",
-    padding: 10,
-    borderRadius: 5,
+    padding: 15,
+    borderRadius: 10,
     alignItems: "center",
-    marginHorizontal: 5,
+    justifyContent: "center",
+    marginHorizontal: 8,
+    height: 50,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   cancelButton: {
     backgroundColor: "#FF4444",
@@ -282,6 +257,8 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
 
