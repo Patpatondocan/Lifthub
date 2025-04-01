@@ -194,7 +194,7 @@ const AdminDashboard = () => {
     checkLoginStatus();
   }, []); // Empty dependency array means this runs once on mount
 
-  const handleBarCodeScanned = ({ data }) => {
+  const handleQrCodesScanned = ({ data }) => {
     if (isCameraActive) {
       console.log("Scanned QR:", data);
       setScannedData(data);
@@ -422,7 +422,7 @@ const AdminDashboard = () => {
       <Camera
         style={styles.camera}
         type={Camera.Constants.Type.back}
-        onBarCodeScanned={isCameraActive ? handleBarCodeScanned : undefined}
+        onQrCodeScanned={isCameraActive ? handleQrCodesScanned : undefined}
       >
         <View style={styles.cameraOverlay}>
           <View style={styles.scanFrame} />

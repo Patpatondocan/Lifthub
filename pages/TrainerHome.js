@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,11 +12,22 @@ import { Ionicons } from "@expo/vector-icons";
 import WorkoutsScreen from "./screens/WorkoutsScreen";
 import TraineesScreen from "./screens/TraineesScreen";
 import ProfileScreen from "./screens/ProfileScreen";
-import ProgressScreen from "./screens/ProgressScreen";
 
-const TrainerHome = ({ setIsLoggedIn }) => {
-  // Add this prop
+const TrainerHome = () => {
   const [activeTab, setActiveTab] = useState("workouts");
+  const [isLogOut, setIsLogOut] = useState(false);
+
+  useEffect(() => {
+    // Check login status when component mounts
+    const checkLoginStatus = () => {
+      const isAuthenticated = localStorage.getItem("isAuthenticated");
+      if (!isAuthenticated) {
+        setIsLogOut(true);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -26,12 +37,22 @@ const TrainerHome = ({ setIsLoggedIn }) => {
         return <TraineesScreen />;
       case "profile":
         return <ProfileScreen />;
-      case "progress":
-        return <ProgressScreen />;
       default:
         return <WorkoutsScreen />;
     }
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userType");
+    setIsLogOut(true);
+    window.location.href = "/";
+  };
+
+  if (isLogOut) {
+    window.location.href = "/";
+    return null;
+  }
 
   const TabButton = ({ name, icon, tab }) => (
     <TouchableOpacity
@@ -56,14 +77,7 @@ const TrainerHome = ({ setIsLoggedIn }) => {
         <TabButton name="Workouts" icon="barbell-outline" tab="workouts" />
         <TabButton name="Trainees" icon="people-outline" tab="trainees" />
         <TabButton name="Profile" icon="person-outline" tab="profile" />
-        <TabButton name="Progress" icon="trending-up-outline" tab="progress" />
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={() => {
-            setIsLoggedIn(false); // This will return to login screen
-            console.log("Logging out...");
-          }}
-        >
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={24} color="#6397C9" />
           <Text style={styles.tabText}>Logout</Text>
         </TouchableOpacity>

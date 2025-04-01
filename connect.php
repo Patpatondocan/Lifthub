@@ -33,6 +33,18 @@ $connectionInfo = array(
 // Attempt database connection
 $conn = sqlsrv_connect($serverName, $connectionInfo);
 
+
+
+
+
+
+
+
+
+
+
+
+
 if ($conn === false) {
     $errors = sqlsrv_errors();
     http_response_code(500);

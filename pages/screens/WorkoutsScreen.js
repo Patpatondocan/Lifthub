@@ -41,15 +41,24 @@ const WorkoutsScreen = () => {
       ],
     },
   ]);
+
+  const [trainees, setTrainees] = useState([
+    { id: "1", name: "Alice Johnson", email: "alice@example.com" },
+    { id: "2", name: "Bob Wilson", email: "bob@example.com" },
+    { id: "3", name: "Carol Martinez", email: "carol@example.com" },
+  ]);
+
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [newWorkout, setNewWorkout] = useState({
     name: "",
     description: "",
     exercises: [],
   });
   const [editingWorkout, setEditingWorkout] = useState(null);
+  const [selectedTrainees, setSelectedTrainees] = useState({});
   const scrollViewRef = useRef(null);
 
   const handleAddWorkout = () => {
@@ -70,6 +79,28 @@ const WorkoutsScreen = () => {
     }
   };
 
+  const handleAssignWorkout = () => {
+    // Here you would implement the logic to assign the workout to selected trainees
+    const selectedTraineeIds = Object.keys(selectedTrainees).filter(
+      (id) => selectedTrainees[id]
+    );
+    console.log(
+      `Assigning workout ${selectedWorkout.name} to trainees:`,
+      selectedTraineeIds
+    );
+
+    // Reset selection and close modal
+    setSelectedTrainees({});
+    setShowAssignModal(false);
+  };
+
+  const toggleTraineeSelection = (traineeId) => {
+    setSelectedTrainees((prev) => ({
+      ...prev,
+      [traineeId]: !prev[traineeId],
+    }));
+  };
+
   const renderWorkoutItem = ({ item }) => (
     <TouchableOpacity
       style={styles.workoutItem}
@@ -87,6 +118,21 @@ const WorkoutsScreen = () => {
         {item.sets} sets x {item.reps ? `${item.reps} reps` : item.duration}
       </Text>
     </View>
+  );
+
+  const renderTraineeItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.traineeItem,
+        selectedTrainees[item.id] && styles.selectedTraineeItem,
+      ]}
+      onPress={() => toggleTraineeSelection(item.id)}
+    >
+      <Text style={styles.traineeName}>{item.name}</Text>
+      {selectedTrainees[item.id] && (
+        <Ionicons name="checkmark-circle" size={24} color="#6397C9" />
+      )}
+    </TouchableOpacity>
   );
 
   const addExercise = () => {
@@ -142,16 +188,26 @@ const WorkoutsScreen = () => {
               keyExtractor={(item, index) => index.toString()}
               contentContainerStyle={styles.exerciseList}
             />
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => {
-                setEditingWorkout(selectedWorkout);
-                setShowEditModal(true);
-                setSelectedWorkout(null);
-              }}
-            >
-              <Text style={styles.editButtonText}>Edit Workout</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => {
+                  setEditingWorkout(selectedWorkout);
+                  setShowEditModal(true);
+                  setSelectedWorkout(null);
+                }}
+              >
+                <Text style={styles.editButtonText}>Edit Workout</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.assignButton}
+                onPress={() => {
+                  setShowAssignModal(true);
+                }}
+              >
+                <Text style={styles.assignButtonText}>Assign to Trainees</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -310,6 +366,45 @@ const WorkoutsScreen = () => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Assign Workout Modal */}
+      <Modal visible={showAssignModal} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => setShowAssignModal(false)}
+                style={styles.backButton}
+              >
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Assign Workout</Text>
+            </View>
+            <Text style={styles.assignText}>
+              Assign "{selectedWorkout?.name}" to trainees:
+            </Text>
+            <FlatList
+              data={trainees}
+              renderItem={renderTraineeItem}
+              keyExtractor={(item) => item.id}
+              style={styles.traineesList}
+            />
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                Object.values(selectedTrainees).filter(Boolean).length === 0 &&
+                  styles.disabledButton,
+              ]}
+              onPress={handleAssignWorkout}
+              disabled={
+                Object.values(selectedTrainees).filter(Boolean).length === 0
+              }
+            >
+              <Text style={styles.modalButtonText}>Assign Workout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -440,14 +535,32 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "#FFFFFF",
   },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
   editButton: {
     backgroundColor: "#6397C9",
     padding: 12,
     borderRadius: 5,
     alignItems: "center",
-    marginTop: 10,
+    flex: 1,
+    marginRight: 5,
   },
   editButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  assignButton: {
+    backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    flex: 1,
+    marginLeft: 5,
+  },
+  assignButtonText: {
     color: "#FFFFFF",
     fontWeight: "bold",
   },
@@ -480,6 +593,35 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     maxHeight: SCREEN_HEIGHT * 0.6,
+  },
+  assignText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  traineesList: {
+    maxHeight: 300,
+    marginBottom: 10,
+  },
+  traineeItem: {
+    backgroundColor: "#333333",
+    padding: 12,
+    borderRadius: 5,
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  selectedTraineeItem: {
+    backgroundColor: "#2A4D69",
+  },
+  traineeName: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  disabledButton: {
+    backgroundColor: "#555555",
+    opacity: 0.7,
   },
 });
 
