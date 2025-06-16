@@ -1,4 +1,4 @@
-// Here's the corrected styles.js file with the duplicate modal styles removed
+// Here's the updated AdminDashBoardStyles.js file with the new styles for QR scanning and user search
 
 import { StyleSheet, Platform, StatusBar, Dimensions } from "react-native";
 
@@ -133,6 +133,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
+  logBookContainer: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+  },
   logBook: {
     flex: 1,
     paddingHorizontal: Platform.OS === "web" ? 0 : 15,
@@ -145,6 +150,35 @@ const styles = StyleSheet.create({
   },
   logText: {
     color: "#FFFFFF",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+    backgroundColor: "#111111",
+  },
+  paginationButton: {
+    backgroundColor: "#2A2A2A",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 5,
+  },
+  paginationButtonDisabled: {
+    backgroundColor: "#1A1A1A",
+    opacity: 0.5,
+  },
+  paginationInfo: {
+    color: "#CCCCCC",
+    marginHorizontal: 12,
+    fontSize: 14,
+    minWidth: 100,
+    textAlign: "center",
   },
 
   // Camera styles
@@ -259,6 +293,300 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
+  },
+  scannerContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultContainer: {
+    marginTop: 20,
+    padding: 10,
+    alignItems: "center",
+  },
+  expiringMembersBox: {
+    backgroundColor: "#2A1810",
+    marginTop: 15,
+    marginHorizontal: 10,
+    borderRadius: 8,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#FFD700",
+  },
+  expiringMembersHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  expiringMembersTitle: {
+    color: "#FFD700",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 6,
+    flex: 1,
+  },
+  expiringMembersList: {
+    gap: 4,
+  },
+  expiringMemberItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 2,
+  },
+  expiringMemberText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    marginLeft: 6,
+    flex: 1,
+  },
+
+  // Log book specific styles
+  logsLoadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginTop: 10,
+  },
+  logsErrorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    color: "#FF4444",
+    fontSize: 16,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#6397C9",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  emptyLogsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyLogsText: {
+    color: "#666",
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: "center",
+  },
+  logHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  logAction: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logActionText: {
+    color: "#6397C9",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  logDate: {
+    color: "#999",
+    fontSize: 14,
+  },
+  logInfo: {
+    color: "#FFFFFF",
+    marginBottom: 10,
+  },
+  logFooter: {
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+    paddingTop: 8,
+  },
+  logUser: {
+    color: "#999",
+    fontSize: 14,
+    fontStyle: "italic",
+  },
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertContent: {
+    backgroundColor: "#1A1A1A",
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxWidth: 400,
+  },
+  alertTitle: {
+    color: "#6397C9",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  alertMessage: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  alertButton: {
+    backgroundColor: "#6397C9",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  alertButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  // QR Scanning and user search styles
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 15,
+  },
+  searchResultsContainer: {
+    maxHeight: 200,
+    width: "100%",
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#333",
+    borderRadius: 8,
+  },
+  searchResultsList: {
+    width: "100%",
+  },
+  searchResultItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  searchResultTextContainer: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  searchResultName: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  searchResultUsername: {
+    color: "#999",
+    fontSize: 14,
+  },
+  scanStatusContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 10,
+    padding: 15,
+    backgroundColor: "#1D1D1D",
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  scanStatusText: {
+    color: "#6397C9",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  foundUserContainer: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  foundUserName: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+  foundUserDetails: {
+    color: "#6397C9",
+    fontSize: 16,
+  },
+  manualEntryButton: {
+    flexDirection: "row",
+    backgroundColor: "#6397C9",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 15,
+  },
+  manualEntryButtonText: {
+    color: "#FFFFFF",
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  dayPassContainer: {
+    alignItems: "center",
+    width: "100%",
+    paddingVertical: 15,
+  },
+  dayPassIcon: {
+    marginBottom: 15,
+  },
+  dayPassTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  dayPassSubtitle: {
+    color: "#CCCCCC",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  dayPassInput: {
+    width: "100%",
+    backgroundColor: "#2A2A2A",
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    color: "#FFFFFF",
+    marginBottom: 20,
+  },
+  dayPassButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 10,
+  },
+  resetScanButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6397C9",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 15,
+  },
+  resetScanButtonText: {
+    color: "#FFFFFF",
+    marginLeft: 8,
+    fontWeight: "bold",
   },
 });
 

@@ -1,0 +1,142 @@
+[14-Jun-2025 21:24:44 Europe/Berlin] add_member.php called with data: {"username":"membershiptest","fullName":"membershiptest","email":"membershiptest@gmail.com","password":"123","contactNum":"1234567891","membershipDuration":"1","userType":"member"}
+[14-Jun-2025 21:24:44 Europe/Berlin] Received data: {"username":"membershiptest","fullName":"membershiptest","email":"membershiptest@gmail.com","password":"123","contactNum":"1234567891","membershipDuration":"1","userType":"member"}
+[14-Jun-2025 21:26:29 Europe/Berlin] add_member.php called with data: {"username":"membershiptest","fullName":"membershiptest","email":"membershiptest@gmail.com","password":"123","contactNum":"1234567891","membershipDuration":"1","userType":"member"}
+[14-Jun-2025 21:26:29 Europe/Berlin] Received data: {"username":"membershiptest","fullName":"membershiptest","email":"membershiptest@gmail.com","password":"123","contactNum":"1234567891","membershipDuration":"1","userType":"member"}
+[14-Jun-2025 21:26:29 Europe/Berlin] Add member error: Username or email already exists
+[14-Jun-2025 21:27:21 Europe/Berlin] add_member.php called with data: {"username":"membershiptest","fullName":"membershiptest","email":"membershiptest1@gmail.com","password":"123","contactNum":"1234567891","membershipDuration":"1","userType":"staff"}
+[14-Jun-2025 21:27:21 Europe/Berlin] Received data: {"username":"membershiptest","fullName":"membershiptest","email":"membershiptest1@gmail.com","password":"123","contactNum":"1234567891","membershipDuration":"1","userType":"staff"}
+[14-Jun-2025 21:27:21 Europe/Berlin] Add member error: Username or email already exists
+[14-Jun-2025 21:27:31 Europe/Berlin] add_member.php called with data: {"username":"membershiptest1","fullName":"membershiptest1","email":"membershiptest111@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"staff"}
+[14-Jun-2025 21:27:31 Europe/Berlin] Received data: {"username":"membershiptest1","fullName":"membershiptest1","email":"membershiptest111@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"staff"}
+[14-Jun-2025 21:27:34 Europe/Berlin] add_member.php called with data: {"username":"membershiptest1","fullName":"membershiptest1","email":"membershiptest111@gmail.com","password":"123123","contactNum":"12345678912","membershipDuration":"1","userType":"staff"}
+[14-Jun-2025 21:27:34 Europe/Berlin] Received data: {"username":"membershiptest1","fullName":"membershiptest1","email":"membershiptest111@gmail.com","password":"123123","contactNum":"12345678912","membershipDuration":"1","userType":"staff"}
+[14-Jun-2025 21:27:34 Europe/Berlin] Add member error: Username or email already exists
+[14-Jun-2025 21:40:07 Europe/Berlin] add_member.php called with data: {"username":"TESTMEMBER","fullName":"TESTMEMBER","email":"TESTMEMBER@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[14-Jun-2025 21:40:07 Europe/Berlin] Received data: {"username":"TESTMEMBER","fullName":"TESTMEMBER","email":"TESTMEMBER@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 04:51:24 Europe/Berlin] add_member.php called with data: {"username":"TESTMEMBER","fullName":"TESTMEMBER","email":"TESTMEMBER@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 04:51:24 Europe/Berlin] Received data: {"username":"TESTMEMBER","fullName":"TESTMEMBER","email":"TESTMEMBER@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 04:51:24 Europe/Berlin] Add member error: Username or email already exists
+[15-Jun-2025 04:51:34 Europe/Berlin] add_member.php called with data: {"username":"TESTMEMBER1","fullName":"TESTMEMBER","email":"TESTMEMBER1@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 04:51:34 Europe/Berlin] Received data: {"username":"TESTMEMBER1","fullName":"TESTMEMBER","email":"TESTMEMBER1@gmail.com","password":"123","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 05:04:07 Europe/Berlin] add_member.php called with data: {"username":"stafftest","fullName":"stafftest","email":"stafftest@gmail.com","password":"123123","contactNum":"12312312312","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 05:04:07 Europe/Berlin] Received data: {"username":"stafftest","fullName":"stafftest","email":"stafftest@gmail.com","password":"123123","contactNum":"12312312312","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 05:19:59 Europe/Berlin] add_member.php called with data: {"username":"stafftest11111","fullName":"stafftest1111","email":"stafftest1111@gmail.com","password":"11111111","contactNum":"12312312312","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 05:19:59 Europe/Berlin] Received data: {"username":"stafftest11111","fullName":"stafftest1111","email":"stafftest1111@gmail.com","password":"11111111","contactNum":"12312312312","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 05:33:45 Europe/Berlin] add_member.php called with data: {"username":"TEAST","fullName":"TEAST","email":"TEAST@gmail.com","password":"123","contactNum":"12312312342","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 05:33:45 Europe/Berlin] Received data: {"username":"TEAST","fullName":"TEAST","email":"TEAST@gmail.com","password":"123","contactNum":"12312312342","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 11:55:50 Europe/Berlin] add_member.php called with data: {"username":"Sabine","fullName":"Stephanie Arabela","email":"Ara@gmail.com","password":"Ara123@","contactNum":"09171234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 11:55:50 Europe/Berlin] Received data: {"username":"Sabine","fullName":"Stephanie Arabela","email":"Ara@gmail.com","password":"Ara123@","contactNum":"09171234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 11:58:34 Europe/Berlin] add_member.php called with data: {"username":"JuanDC","fullName":"Juan Dela Cruz","email":"juan123@gmail.com","password":"JuanPass!23","contactNum":"09181234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 11:58:34 Europe/Berlin] Received data: {"username":"JuanDC","fullName":"Juan Dela Cruz","email":"juan123@gmail.com","password":"JuanPass!23","contactNum":"09181234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:02:30 Europe/Berlin] add_member.php called with data: {"username":"MariaS3","fullName":"Maria Santos","email":"maria.s@gmail.com","password":"Maria#2024\t","contactNum":"09991234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:02:30 Europe/Berlin] Received data: {"username":"MariaS3","fullName":"Maria Santos","email":"maria.s@gmail.com","password":"Maria#2024\t","contactNum":"09991234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:07:01 Europe/Berlin] add_member.php called with data: {"username":"LEOleo","fullName":"Leo Ramos\t","email":"leo.ramos@gmail.com","password":"LeoR@ms321\t","contactNum":"09221234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:07:01 Europe/Berlin] Received data: {"username":"LEOleo","fullName":"Leo Ramos\t","email":"leo.ramos@gmail.com","password":"LeoR@ms321\t","contactNum":"09221234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:09:16 Europe/Berlin] add_member.php called with data: {"username":"Caryes","fullName":"Carla Reyes","email":"carla.reyes@gmail.com","password":"Carla#555\t","contactNum":"09331234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:09:16 Europe/Berlin] Received data: {"username":"Caryes","fullName":"Carla Reyes","email":"carla.reyes@gmail.com","password":"Carla#555\t","contactNum":"09331234567","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:09:47 Europe/Berlin] add_member.php called with data: {"username":"Mark3","fullName":"Mark Enriquez\t","email":"mark.enqz@gmail.com","password":"Mark!998\t","contactNum":"09172222222\t","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:09:47 Europe/Berlin] Received data: {"username":"Mark3","fullName":"Mark Enriquez\t","email":"mark.enqz@gmail.com","password":"Mark!998\t","contactNum":"09172222222\t","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:10:52 Europe/Berlin] add_member.php called with data: {"username":"TrainerDan","fullName":"Dan Mendoza\t","email":"dan.trainer@gmail.com","password":"Dan@Train001","contactNum":"09175554444","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:10:52 Europe/Berlin] Received data: {"username":"TrainerDan","fullName":"Dan Mendoza\t","email":"dan.trainer@gmail.com","password":"Dan@Train001","contactNum":"09175554444","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:12:22 Europe/Berlin] add_member.php called with data: {"username":"test","fullName":"TESTMEMBER","email":"TESTMEMBER@gmail.com","password":"test","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:12:22 Europe/Berlin] Received data: {"username":"test","fullName":"TESTMEMBER","email":"TESTMEMBER@gmail.com","password":"test","contactNum":"12345678912","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 12:14:02 Europe/Berlin] add_member.php called with data: {"username":"staff","fullName":"staff","email":"staff@gmail.com","password":"staff","contactNum":"09912937336","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:14:02 Europe/Berlin] Received data: {"username":"staff","fullName":"staff","email":"staff@gmail.com","password":"staff","contactNum":"09912937336","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:22:34 Europe/Berlin] add_member.php called with data: {"username":"staff","fullName":"staff","email":"staff@gmail.com","password":"123","contactNum":"09912937336","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:22:34 Europe/Berlin] Received data: {"username":"staff","fullName":"staff","email":"staff@gmail.com","password":"123","contactNum":"09912937336","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:27:05 Europe/Berlin] add_member.php called with data: {"username":"TEST","fullName":"staff!!!!!!","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:27:05 Europe/Berlin] Received data: {"username":"TEST","fullName":"staff!!!!!!","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:29 Europe/Berlin] add_member.php called with data: {"username":"TEST","fullName":"staff!!!!!!","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:29 Europe/Berlin] POST data: {"username":"TEST","fullName":"staff!!!!!!","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:29 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => staff
+    [force_type] => true
+)
+
+[15-Jun-2025 12:34:29 Europe/Berlin] Received data: {"username":"TEST","fullName":"staff!!!!!!","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:29 Europe/Berlin] Using userType: staff
+[15-Jun-2025 12:34:29 Europe/Berlin] Add member error: Username or email already exists
+[15-Jun-2025 12:34:36 Europe/Berlin] add_member.php called with data: {"username":"TEST","fullName":"staff!!!!!!","email":"stafftest@gmail.com","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:36 Europe/Berlin] POST data: {"username":"TEST","fullName":"staff!!!!!!","email":"stafftest@gmail.com","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:36 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => staff
+    [force_type] => true
+)
+
+[15-Jun-2025 12:34:36 Europe/Berlin] Received data: {"username":"TEST","fullName":"staff!!!!!!","email":"stafftest@gmail.com","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:36 Europe/Berlin] Using userType: staff
+[15-Jun-2025 12:34:36 Europe/Berlin] Add member error: Username or email already exists
+[15-Jun-2025 12:34:45 Europe/Berlin] add_member.php called with data: {"username":"TESTSTAFF","fullName":"staff!!!!!!","email":"stafftest@gmail.com","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:45 Europe/Berlin] POST data: {"username":"TESTSTAFF","fullName":"staff!!!!!!","email":"stafftest@gmail.com","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:45 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => staff
+    [force_type] => true
+)
+
+[15-Jun-2025 12:34:45 Europe/Berlin] Received data: {"username":"TESTSTAFF","fullName":"staff!!!!!!","email":"stafftest@gmail.com","password":"123","contactNum":"111","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:34:45 Europe/Berlin] Using userType: staff
+[15-Jun-2025 12:38:45 Europe/Berlin] add_member.php called with data: {"username":"TrainerDan","fullName":"Dan Mendoza","email":"dan.trainer@gmail.com","password":"Dan@Train001","contactNum":"09175554444\t","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:38:45 Europe/Berlin] POST data: {"username":"TrainerDan","fullName":"Dan Mendoza","email":"dan.trainer@gmail.com","password":"Dan@Train001","contactNum":"09175554444\t","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:38:45 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => trainer
+    [force_type] => true
+)
+
+[15-Jun-2025 12:38:45 Europe/Berlin] Received data: {"username":"TrainerDan","fullName":"Dan Mendoza","email":"dan.trainer@gmail.com","password":"Dan@Train001","contactNum":"09175554444\t","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:38:45 Europe/Berlin] Using userType: trainer with QR code: TRAINER-TRAINE326
+[15-Jun-2025 12:39:58 Europe/Berlin] add_member.php called with data: {"username":"TrainerJuls","fullName":"Julia Domingo","email":"julia.dom@gmail.com","password":"JuliaT@2024","contactNum":"09176665555","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:39:58 Europe/Berlin] POST data: {"username":"TrainerJuls","fullName":"Julia Domingo","email":"julia.dom@gmail.com","password":"JuliaT@2024","contactNum":"09176665555","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:39:58 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => trainer
+    [force_type] => true
+)
+
+[15-Jun-2025 12:39:58 Europe/Berlin] Received data: {"username":"TrainerJuls","fullName":"Julia Domingo","email":"julia.dom@gmail.com","password":"JuliaT@2024","contactNum":"09176665555","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 12:39:59 Europe/Berlin] Using userType: trainer with QR code: TRAINER-TRAINE471
+[15-Jun-2025 12:40:40 Europe/Berlin] add_member.php called with data: {"username":"StaffGo","fullName":"Peter Go","email":"peter.go@gmail.com","password":"StaffGo!23\t","contactNum":"09179998888","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:40:40 Europe/Berlin] POST data: {"username":"StaffGo","fullName":"Peter Go","email":"peter.go@gmail.com","password":"StaffGo!23\t","contactNum":"09179998888","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:40:40 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => staff
+    [force_type] => true
+)
+
+[15-Jun-2025 12:40:40 Europe/Berlin] Received data: {"username":"StaffGo","fullName":"Peter Go","email":"peter.go@gmail.com","password":"StaffGo!23\t","contactNum":"09179998888","membershipDuration":"1","userType":"staff"}
+[15-Jun-2025 12:40:40 Europe/Berlin] Using userType: staff with QR code: 
+[15-Jun-2025 18:00:19 Europe/Berlin] add_member.php called with data: {"username":"sample1","fullName":"staff","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 18:00:19 Europe/Berlin] POST data: {"username":"sample1","fullName":"staff","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 18:00:19 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => member
+    [force_type] => true
+)
+
+[15-Jun-2025 18:00:19 Europe/Berlin] Received data: {"username":"sample1","fullName":"staff","email":"staff","password":"123","contactNum":"111","membershipDuration":"1","userType":"member"}
+[15-Jun-2025 18:00:19 Europe/Berlin] Using userType: member with QR code: MEMBER-SAMPLE452
+[15-Jun-2025 18:00:35 Europe/Berlin] add_member.php called with data: {"username":"trainer","fullName":"trainer","email":"trainer@gmail.com","password":"123","contactNum":"01234578","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 18:00:35 Europe/Berlin] POST data: {"username":"trainer","fullName":"trainer","email":"trainer@gmail.com","password":"123","contactNum":"01234578","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 18:00:35 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => trainer
+    [force_type] => true
+)
+
+[15-Jun-2025 18:00:35 Europe/Berlin] Received data: {"username":"trainer","fullName":"trainer","email":"trainer@gmail.com","password":"123","contactNum":"01234578","membershipDuration":"1","userType":"trainer"}
+[15-Jun-2025 18:00:35 Europe/Berlin] Using userType: trainer with QR code: TRAINER-TRAINE485
+[15-Jun-2025 18:20:33 Europe/Berlin] add_member.php called with data: {"username":"LOG","fullName":"LOG","email":"LOG@GMAIL.COM","password":"123","contactNum":"1231231","membershipDuration":"1","userType":"member","staffID":"1032"}
+[15-Jun-2025 18:20:33 Europe/Berlin] POST data: {"username":"LOG","fullName":"LOG","email":"LOG@GMAIL.COM","password":"123","contactNum":"1231231","membershipDuration":"1","userType":"member","staffID":"1032"}
+[15-Jun-2025 18:20:33 Europe/Berlin] GET params: Array
+(
+    [explicit_user_type] => member
+    [force_type] => true
+)
+
+[15-Jun-2025 18:20:33 Europe/Berlin] Received data: {"username":"LOG","fullName":"LOG","email":"LOG@GMAIL.COM","password":"123","contactNum":"1231231","membershipDuration":"1","userType":"member","staffID":"1032"}
+[15-Jun-2025 18:20:33 Europe/Berlin] Using userType: member with QR code: MEMBER-LOG345
+[15-Jun-2025 18:20:33 Europe/Berlin] PHP Warning:  Undefined variable $result in C:\xampp\htdocs\LiftHub\add_member.php on line 150
+[15-Jun-2025 18:20:33 Europe/Berlin] PHP Warning:  Undefined variable $success in C:\xampp\htdocs\LiftHub\add_member.php on line 150

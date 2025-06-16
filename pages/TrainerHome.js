@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,50 +9,46 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import TrainerProfileScreen from "./screens/TrainerProfileScreen";
 import WorkoutsScreen from "./screens/WorkoutsScreen";
 import TraineesScreen from "./screens/TraineesScreen";
-import ProfileScreen from "./screens/ProfileScreen";
+import TrainerSettingsScreen from "./screens/TrainerSettingsScreen";
 
-const TrainerHome = () => {
-  const [activeTab, setActiveTab] = useState("workouts");
-  const [isLogOut, setIsLogOut] = useState(false);
+const TrainerHome = ({ setIsLoggedIn }) => {
+  const [activeTab, setActiveTab] = useState("profile");
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    // Check login status when component mounts
-    const checkLoginStatus = () => {
-      const isAuthenticated = localStorage.getItem("isAuthenticated");
-      if (!isAuthenticated) {
-        setIsLogOut(true);
+    const getUserId = async () => {
+      try {
+        const id = await AsyncStorage.getItem("userId");
+        if (!id) {
+          console.error("No userId found");
+          return;
+        }
+        setUserId(id);
+        // use userId for API calls
+      } catch (error) {
+        console.error("Error getting userId:", error);
       }
     };
-
-    checkLoginStatus();
+    getUserId();
   }, []);
-
   const renderScreen = () => {
     switch (activeTab) {
+      case "profile":
+        return <TrainerProfileScreen />;
       case "workouts":
         return <WorkoutsScreen />;
       case "trainees":
         return <TraineesScreen />;
-      case "profile":
-        return <ProfileScreen />;
+      case "settings":
+        return <TrainerSettingsScreen setIsLoggedIn={setIsLoggedIn} />;
       default:
-        return <WorkoutsScreen />;
+        return <TrainerProfileScreen />;
     }
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userType");
-    setIsLogOut(true);
-    window.location.href = "/";
-  };
-
-  if (isLogOut) {
-    window.location.href = "/";
-    return null;
-  }
 
   const TabButton = ({ name, icon, tab }) => (
     <TouchableOpacity
@@ -74,13 +70,10 @@ const TrainerHome = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>{renderScreen()}</View>
       <View style={styles.tabBar}>
+        <TabButton name="Profile" icon="person-outline" tab="profile" />
         <TabButton name="Workouts" icon="barbell-outline" tab="workouts" />
         <TabButton name="Trainees" icon="people-outline" tab="trainees" />
-        <TabButton name="Profile" icon="person-outline" tab="profile" />
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#6397C9" />
-          <Text style={styles.tabText}>Logout</Text>
-        </TouchableOpacity>
+        <TabButton name="Settings" icon="settings-outline" tab="settings" />
       </View>
     </SafeAreaView>
   );
@@ -119,11 +112,6 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: "#FFFFFF",
-  },
-  logoutButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
   },
 });
 

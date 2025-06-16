@@ -1,106 +1,73 @@
 <?php
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Set headers for CORS and content type - THESE MUST BE FIRST
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Accept');
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Initialize response array
-$response = [
-    'success' => false,
-    'message' => '',
-    'members' => []
-];
+$response = ['success' => false, 'message' => '', 'members' => []];
 
 try {
-    // SQL Server connection settings
     $serverName = "LAPTOP-ANQIBD69";
-    $database = "lifthub";
-    $uid = "sa";
-    $pass = "admin123";
-
-    // Configure SQL Server connection
     $connectionInfo = [
-        "Database" => $database,
-        "Uid" => $uid,
-        "PWD" => $pass,
+        "Database" => "lifthub",
+        "Uid" => "sa",
+        "PWD" => "admin123",
         "CharacterSet" => "UTF-8",
-        "TrustServerCertificate" => true,
-        "LoginTimeout" => 5
+        "TrustServerCertificate" => true
     ];
 
-    // Attempt database connection
     $conn = sqlsrv_connect($serverName, $connectionInfo);
-
     if ($conn === false) {
-        throw new Exception("Connection failed: " . print_r(sqlsrv_errors(), true));
+        throw new Exception("Connection failed: " . json_encode(sqlsrv_errors()));
     }
 
-    // SQL query to fetch members
     $sql = "SELECT 
                 userID, 
                 userName, 
-                fullName, 
+                fullName,  
                 email, 
                 contactNum, 
-                userType 
-            FROM tbl_user
+                userType,
+                CONVERT(varchar, membership, 120) as membership
+            FROM tbl_user 
+            WHERE userType != 'admin'
             ORDER BY fullName ASC";
 
     $stmt = sqlsrv_query($conn, $sql);
-
     if ($stmt === false) {
-        throw new Exception("Query failed: " . print_r(sqlsrv_errors(), true));
+        throw new Exception("Query failed: " . json_encode(sqlsrv_errors()));
     }
 
-    // Fetch data
     while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
         $response['members'][] = [
             'userID' => (int)$row['userID'],
             'userName' => $row['userName'],
-            'fullName' => $row['fullName'],
+            'name' => $row['fullName'],      // Include name field for UI compatibility
+            'fullName' => $row['fullName'],  // Include fullName field for consistency
             'email' => $row['email'],
-            'contactNum' => formatPhone($row['contactNum']),
-            'userType' => $row['userType']
+            'contactNum' => $row['contactNum'],
+            'userType' => $row['userType'],
+            'membership' => $row['membership']  // ISO formatted date string
         ];
     }
 
     $response['success'] = true;
-    $response['message'] = count($response['members']) . " members found";
+    $response['message'] = count($response['members']) . " members loaded";
 
 } catch (Exception $e) {
     $response['message'] = "Error: " . $e->getMessage();
     http_response_code(500);
 } finally {
-    // Clean up resources
-    if (isset($stmt)) {
-        sqlsrv_free_stmt($stmt);
-    }
-    if (isset($conn)) {
-        sqlsrv_close($conn);
-    }
+    if (isset($stmt)) sqlsrv_free_stmt($stmt);
+    if (isset($conn)) sqlsrv_close($conn);
     
-    // Ensure output
+    ob_clean();
     echo json_encode($response);
     exit();
-}
-
-// Helper function to format phone numbers
-function formatPhone($number) {
-    $number = preg_replace('/[^0-9]/', '', $number);
-    if (strlen($number) === 10) {
-        return substr($number, 0, 3) . '-' . substr($number, 3, 3) . '-' . substr($number, 6);
-    }
-    return $number;
 }
 ?>
