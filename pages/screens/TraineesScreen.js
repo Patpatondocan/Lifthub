@@ -16,6 +16,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import * as Print from "expo-print";
 
 const TraineesScreen = () => {
   const [trainees, setTrainees] = useState([]);
@@ -439,6 +442,122 @@ const TraineesScreen = () => {
     };
   }, [loading, refreshing]);
 
+  // Export Data to PDF
+  const handleExportData = async () => {
+    if (!trainees || trainees.length === 0) {
+      Alert.alert("No Data", "There are no trainees to export.");
+      return;
+    }
+    try {
+      // Build HTML content
+      let htmlContent = `
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; color: #222; }
+            h1 { text-align: center; }
+            .trainee { margin-bottom: 40px; border-bottom: 1px solid #ccc; padding-bottom: 20px; }
+            .trainee h2 { color: #2a4d7a; margin-bottom: 5px; }
+            .section-title { font-weight: bold; margin-top: 10px; color: #6397C9; }
+            .workout { margin-left: 20px; margin-bottom: 8px; }
+            .feedback { margin-left: 30px; color: #444; font-style: italic; }
+            .completed { color: #4CAF50; }
+            .pending { color: #FFA500; }
+          </style>
+        </head>
+        <body>
+          <h1>Trainees Report</h1>
+          <div>
+      `;
+      trainees.forEach((trainee) => {
+        const fullName =
+          trainee.fullName ||
+          trainee.name ||
+          trainee.username ||
+          "No information";
+        const email = trainee.email || "No information";
+        const contact = trainee.contact || trainee.phone || "No information";
+        const progress =
+          trainee.progress === null ||
+          trainee.progress === undefined ||
+          trainee.progress === ""
+            ? "No data"
+            : trainee.progress + "%";
+        const completedWorkouts =
+          trainee.completedWorkouts === null ||
+          trainee.completedWorkouts === undefined
+            ? "No data"
+            : trainee.completedWorkouts;
+        const workoutsWithFeedback =
+          trainee.workoutsWithFeedback === null ||
+          trainee.workoutsWithFeedback === undefined
+            ? "No data"
+            : trainee.workoutsWithFeedback;
+        htmlContent += `
+          <div class="trainee">
+            <h2>${fullName}</h2>
+            <div><span class="section-title">Email:</span> ${email}</div>
+            <div><span class="section-title">Phone:</span> ${contact}</div>
+            <div><span class="section-title">Progress:</span> ${progress}</div>
+            <div><span class="section-title">Assigned Workouts:</span></div>
+            <ul>
+              ${
+                trainee.workouts &&
+                Array.isArray(trainee.workouts) &&
+                trainee.workouts.length > 0
+                  ? trainee.workouts
+                      .map((w, idx) => {
+                        const workoutName = w.name || "No information";
+                        const completed =
+                          w.completed === null || w.completed === undefined
+                            ? "No data"
+                            : w.completed
+                            ? "<span class='completed'>Completed</span>"
+                            : "<span class='pending'>Pending</span>";
+                        const feedback =
+                          w.hasFeedback && w.feedback
+                            ? `<div class='feedback'>Feedback: ${w.feedback}</div>`
+                            : w.hasFeedback
+                            ? `<div class='feedback'>No feedback provided</div>`
+                            : "";
+                        return `
+                            <li class='workout'>
+                              <b>${workoutName}</b> - ${completed}
+                              ${feedback}
+                            </li>
+                          `;
+                      })
+                      .join("")
+                  : "<li class='workout'>No data</li>"
+              }
+            </ul>
+            <div><span class="section-title">Completed Workouts:</span> ${completedWorkouts}</div>
+            <div><span class="section-title">Workouts with Feedback:</span> ${workoutsWithFeedback}</div>
+          </div>
+        `;
+      });
+      htmlContent += `</div></body></html>`;
+
+      // Generate PDF using expo-print
+      const { uri } = await Print.printToFileAsync({
+        html: htmlContent,
+        base64: false,
+      });
+      if (uri) {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri);
+        } else {
+          Alert.alert("Export Successful", "PDF generated at: " + uri);
+        }
+      } else {
+        Alert.alert("Export Failed", "Could not generate PDF file.");
+      }
+    } catch (err) {
+      console.error("Export PDF error:", err);
+      Alert.alert("Export Failed", err.message || "Could not export data.");
+    }
+  };
+
   if (loading && !refreshing && trainees.length === 0 && !error) {
     return (
       <View style={styles.centeredContainer}>
@@ -467,6 +586,13 @@ const TraineesScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>My Trainees</Text>
+        <TouchableOpacity
+          style={styles.exportButton}
+          onPress={handleExportData}
+        >
+          <Ionicons name="download-outline" size={20} color="#FFFFFF" />
+          <Text style={styles.exportButtonText}>Export Data</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchBarContainer}>
@@ -794,6 +920,25 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  exportButton: {
+    backgroundColor: "#2a4d7a",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 10,
+    shadowColor: "#2a4d7a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exportButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    marginLeft: 5,
   },
   searchBarContainer: {
     flexDirection: "row",
