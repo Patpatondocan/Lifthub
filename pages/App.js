@@ -1,6 +1,12 @@
-"use client";
-
 import React, { useState, useEffect, useContext } from "react";
+import { Platform } from "react-native";
+import {
+  Ionicons,
+  MaterialIcons,
+  FontAwesome,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import { useFonts } from "expo-font";
 import {
   SafeAreaView,
   Text,
@@ -8,10 +14,8 @@ import {
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
 import AdminDashboard from "./AdminDashboard";
 import TrainerHome from "./TrainerHome";
 import StaffDashboard from "./StaffDashboard";
@@ -66,8 +70,24 @@ const Storage = {
 };
 
 const LoginScreen = () => {
+  // All hooks at the top, before any return or conditional
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+    ...MaterialIcons.font,
+    ...FontAwesome.font,
+    ...MaterialCommunityIcons.font,
+  });
   const { isLoggedIn, setIsLoggedIn, userType, setUserType } =
     useContext(AuthContext);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginStatus, setLoginStatus] = useState("");
+  const [isLoggedInState, setIsLoggedInState] = useState(false);
+  const [userTypeState, setUserTypeState] = useState(null);
+  // Check if running on Android
+  const isAndroid = Platform.OS === "android";
+  // Check if running on web
+  const isWeb = Platform.OS === "web";
 
   useEffect(() => {
     if (typeof setIsLoggedIn !== "function") {
@@ -75,25 +95,12 @@ const LoginScreen = () => {
     }
   }, [setIsLoggedIn]);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginStatus, setLoginStatus] = useState("");
-  const [isLoggedInState, setIsLoggedInState] = useState(false);
-  const [userTypeState, setUserTypeState] = useState(null);
-
-  // Check if running on Android
-  const isAndroid = Platform.OS === "android";
-  // Check if running on web (you might need to adjust this based on your environment)
-  const isWeb = Platform.OS === "web";
-
-  // Check login status on component mount
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
         const isAuth = await Storage.getItem("isAuthenticated");
         const storedUserType = await Storage.getItem("userType");
         if (isAuth === "true" && storedUserType) {
-          // Verify the user type is compatible with the platform
           if (
             (isAndroid &&
               (storedUserType === "member" || storedUserType === "trainer")) ||
@@ -103,7 +110,6 @@ const LoginScreen = () => {
             setIsLoggedInState(true);
             setUserTypeState(storedUserType);
           } else {
-            // Incompatible user type for this platform - force logout
             await Storage.clear();
           }
         }
@@ -111,11 +117,9 @@ const LoginScreen = () => {
         console.error("Error checking auth status:", error);
       }
     };
-
     checkLoginStatus();
   }, []);
 
-  // Continuous authentication check
   useEffect(() => {
     const checkAuth = async () => {
       const isAuth = await Storage.getItem("isAuthenticated");
@@ -124,10 +128,33 @@ const LoginScreen = () => {
         setUserTypeState(null);
       }
     };
-
-    const interval = setInterval(checkAuth, 1000); // Check every second
+    const interval = setInterval(checkAuth, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    console.log(
+      "Auth state changed - isLoggedIn:",
+      isLoggedIn,
+      "userType:",
+      userType
+    );
+  }, [isLoggedIn, userType]);
+
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#000",
+        }}
+      >
+        <Text style={{ color: "#fff" }}>Loading fonts...</Text>
+      </View>
+    );
+  }
 
   const API_URL = Platform.select({
     native: "http://10.0.2.2/lifthub/connect.php",
@@ -234,16 +261,6 @@ const LoginScreen = () => {
       console.log("Storage cleared on logout");
     }
   };
-
-  // Monitor login state changes for debugging
-  useEffect(() => {
-    console.log(
-      "Auth state changed - isLoggedIn:",
-      isLoggedIn,
-      "userType:",
-      userType
-    );
-  }, [isLoggedIn, userType]);
 
   if (isLoggedInState) {
     return (

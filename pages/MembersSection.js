@@ -1399,11 +1399,15 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#333",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 3,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }),
   },
   headerContent: {
     flexDirection: "row",
@@ -1439,11 +1443,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    shadowColor: "#6397C9",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
     elevation: 3,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(99,151,201,0.3)" }
+      : {
+          shadowColor: "#6397C9",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        }),
   },
   addButtonContent: {
     flexDirection: "row",
@@ -1460,11 +1468,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 2,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }),
   },
   memberCardHeader: {
     flexDirection: "row",

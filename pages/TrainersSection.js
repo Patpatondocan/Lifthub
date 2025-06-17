@@ -292,15 +292,14 @@ const TrainersSection = () => {
 
   // Modify the renderTraineesList function to add the remove button
   const renderTraineesList = () => {
-    if (!selectedTrainerDetails) return null;
+    if (!trainerDetails) return null;
 
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Assigned Trainees</Text>
         <View style={styles.traineeListContainer}>
-          {selectedTrainerDetails.trainees &&
-          selectedTrainerDetails.trainees.length > 0 ? (
-            selectedTrainerDetails.trainees.map((trainee) => (
+          {trainerDetails.trainees && trainerDetails.trainees.length > 0 ? (
+            trainerDetails.trainees.map((trainee) => (
               <View
                 key={trainee.id || trainee.userID}
                 style={styles.traineeItem}

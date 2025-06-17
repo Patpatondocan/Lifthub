@@ -28,10 +28,14 @@ const styles = StyleSheet.create({
     left: 0,
     zIndex: 5,
     elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "2px 0 5px rgba(0,0,0,0.25)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 2, height: 0 },
+          shadowOpacity: 0.25,
+          shadowRadius: 5,
+        }),
     display: "flex",
     flexDirection: "column",
   },
@@ -123,10 +127,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     elevation: 3,
-    shadowColor: "#6397C9",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(99,151,201,0.3)" }
+      : {
+          shadowColor: "#6397C9",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        }),
   },
   addButtonText: {
     color: "#FFFFFF",
@@ -184,48 +192,51 @@ const styles = StyleSheet.create({
   // Camera styles
   cameraContainer: {
     width: "100%",
-    height: 450, // Fixed height for better proportions
+    aspectRatio: 4 / 3, // Using aspect ratio instead of fixed height
+    maxHeight: 450,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#111111",
     overflow: "hidden",
     marginBottom: 20,
     borderRadius: 8,
+    position: "relative", // Added for absolute positioning of children
   },
   camera: {
     flex: 1,
     width: "100%",
   },
   cameraOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scanFrame: {
-    width: 200,
-    height: 200,
-    borderWidth: 2,
-    borderColor: "#6397C9",
-  },
-  scanSuccessOverlay: {
-    position: "absolute",
+    position: "absolute", // Changed to absolute positioning
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.7)",
     justifyContent: "center",
     alignItems: "center",
   },
-  scanSuccessText: {
-    color: "#6397C9",
-    fontSize: 18,
-    marginTop: 10,
-    textAlign: "center",
+
+  // Add responsive styles for different screen sizes
+  qrReaderWrapper: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  cameraText: {
-    color: "#6397C9",
-    fontSize: 18,
+  qrReader: {
+    width: "100%",
+    maxWidth: "650px",
+    height: "100%",
+    alignItems: "center", // Center horizontally
+    justifyContent: "center", // Center vertically
+  },
+  qrReaderSmall: {
+    maxWidth: "100%",
+    maxHeight: "300px",
+  },
+  qrReaderMedium: {
+    maxWidth: "450px",
   },
 
   // Modal styles - improved for modern look
@@ -271,19 +282,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   modalButton: {
-    flex: 1,
-    backgroundColor: "#6397C9",
-    padding: 15,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 8,
     height: 50,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
     elevation: 5,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(0,0,0,0.25)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        }),
   },
   cancelButton: {
     backgroundColor: "#FF4444",

@@ -82,6 +82,22 @@ const AdminDashboard = () => {
   const [scanStatus, setScanStatus] = useState("");
   const [foundUser, setFoundUser] = useState(null);
 
+  // Add a state variable to track if scanning is allowed
+  const [scanningEnabled, setScanningEnabled] = useState(true);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState("");
+
+  // Function to determine QR reader size based on window dimensions
+  const getQRReaderSize = () => {
+    const width = windowDimensions.width;
+    if (width < 500) {
+      return styles.qrReaderSmall;
+    } else if (width < 768) {
+      return styles.qrReaderMedium;
+    }
+    return {};
+  };
+
   const API_BASE_URL = Platform.select({
     android: "http://10.0.2.2/lifthub",
     default: "http://localhost/lifthub",
@@ -128,20 +144,54 @@ const AdminDashboard = () => {
     }).start();
   }, [isDrawerOpen, sidebarAnimation]);
 
-  // Update the initScanner function
+  // Prevent concurrent scanner initializations
+  const scannerInitInProgress = useRef(false);
+
+  // Update the scanner initialization logic to ensure the async scan handler is used
   const initScanner = async () => {
-    if (Platform.OS === "web" && modalVisible) {
+    if (Platform.OS === "web" && modalVisible && scanningEnabled) {
+      if (scannerInitInProgress.current) return;
+      scannerInitInProgress.current = true;
       try {
-        // Show initial status
         setScanStatus("Initializing camera...");
 
-        const scanner = await initQRScanner(
+        // Clean up any existing scanner
+        if (scanner) {
+          await stopScanner(scanner);
+          setScanner(null);
+        }
+
+        // Retry finding the QR reader element up to 10 times
+        let qrReaderDiv = null;
+        for (let i = 0; i < 10; i++) {
+          qrReaderDiv = document.getElementById("qr-reader");
+          if (qrReaderDiv) break;
+          await new Promise((res) => setTimeout(res, 100));
+        }
+        if (!qrReaderDiv) {
+          console.error("QR reader div not found in DOM");
+          setScanStatus("QR reader element not found. Please reload the page.");
+          scannerInitInProgress.current = false;
+          return null;
+        }
+
+        // Create a new scanner instance
+        const newScanner = await initQRScanner(
           "qr-reader",
-          handleQrScanned,
+          handleQrScannedSafely, // Always use the main scan handler
           (error) => {
-            // This will only be called for non-normal errors now
-            console.error("QR Error:", error);
-            // Only update UI for serious errors
+            // Suppress parse errors from being shown to users
+            if (
+              error.includes(
+                "No MultiFormat Readers were able to detect the code"
+              ) ||
+              error.includes("parse error")
+            ) {
+              // Silently ignore parse errors
+              return;
+            }
+
+            // Handle known camera errors with user-friendly messages
             if (
               error.includes("NotAllowedError") ||
               error.includes("permission")
@@ -154,40 +204,258 @@ const AdminDashboard = () => {
               setScanStatus("No camera found or camera is not accessible.");
             } else if (error.includes("AbortError")) {
               setScanStatus("Camera initialization was aborted.");
+            } else {
+              // For all other errors, show a generic message
+              console.error("Scanner error:", error);
+              setScanStatus("Scanner error occurred. Please try again.");
             }
           }
         );
 
-        setScanner(scanner);
+        setScanner(newScanner);
 
-        // Now start the scanner after initialization
-        if (scanner) {
-          const started = await startScanner(scanner);
-          if (started) {
-            setScanStatus("Camera ready. Point at a QR code.");
-          } else {
-            setScanStatus("Failed to start camera. Please try again.");
+        // Start the scanner
+        const started = await startScanner(
+          newScanner,
+          handleQrScannedSafely,
+          (error) => {
+            console.error("Error starting scanner:", error);
+            setScanStatus("Scanner error: " + error);
           }
+        );
+
+        if (started) {
+          setScanStatus("Camera ready. Point at a QR code.");
+          scannerInitInProgress.current = false;
+          return newScanner;
         } else {
-          setScanStatus("Failed to initialize camera. Please try again.");
+          setScanStatus("Failed to start camera. Please try again.");
+          scannerInitInProgress.current = false;
+          return null;
         }
       } catch (error) {
-        console.error("Scanner init error:", error);
+        console.error("Scanner initialization error:", error);
         setScanStatus("Camera error: " + (error.message || "Unknown error"));
+        scannerInitInProgress.current = false;
+        return null;
       }
+    }
+    return null;
+  };
+
+  // Add a helper to get the full QR code from a base code
+  const getFullQrCodeForUser = async (baseQrCode) => {
+    try {
+      // Search for the user by the base QR code (assume it's unique enough)
+      const response = await fetch(
+        `${API_BASE_URL}/search_users.php?query=${encodeURIComponent(
+          baseQrCode
+        )}`
+      );
+      const data = await response.json();
+      if (data.success && data.users && data.users.length > 0) {
+        // Find the user whose qrCode starts with the base code
+        const user = data.users.find(
+          (u) => u.qrCode && u.qrCode.startsWith(baseQrCode)
+        );
+        if (user && user.qrCode) {
+          return user.qrCode;
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error("Error fetching user for QR code lookup:", err);
+      return null;
     }
   };
 
-  useEffect(() => {
-    // Replace the old initialization code with the new initScanner call
-    if (modalVisible) {
+  // Update the scan handler to use the full QR code if only the base is scanned
+  const handleQrScannedSafely = async (decodedText) => {
+    try {
+      if (!decodedText || decodedText.trim() === "") {
+        return;
+      }
+
+      // Prevent multiple scans at once
+      if (!scanningEnabled) return;
+
+      // Immediately disable scanning to prevent duplicates
+      setScanningEnabled(false);
+
+      // Update UI with scanned data
+      setScannedData(decodedText);
+      setNewLogName(decodedText);
+      setScanStatus("QR code detected! Processing...");
+
+      let qrToValidate = decodedText;
+      if (!/-\d+$/.test(decodedText)) {
+        // If it doesn't end with -<digits>, treat as base
+        const fullQr = await getFullQrCodeForUser(decodedText);
+        if (fullQr) {
+          qrToValidate = fullQr;
+        } else {
+          setScanStatus("No matching user found for scanned code.");
+          const t = setTimeout(() => {
+            setScanningEnabled(true);
+            setScannedData(null);
+            setFoundUser(null);
+          }, 2000);
+          closeTimeouts.current.push(t);
+          return;
+        }
+      }
+
+      // Process the QR code
+      await validateUserQRAndCreateLog(qrToValidate);
+
+      // Don't close the modal here - let validateUserQRAndCreateLog handle that
+      // Just re-enable scanning so the next scan works
+      const t = setTimeout(() => {
+        setScanningEnabled(true);
+        setScannedData(null);
+        setFoundUser(null);
+      }, 2000);
+      closeTimeouts.current.push(t);
+    } catch (error) {
+      console.error("Error in QR scan handler:", error);
+      setScanStatus("Error processing QR code: " + error.message);
+
+      // Re-enable scanning after error
+      const t = setTimeout(() => {
+        setScanningEnabled(true);
+      }, 2000);
+      closeTimeouts.current.push(t);
+    }
+  };
+
+  // Replace handleQrScanned with this safeguard function
+  const handleQrScanned = handleQrScannedSafely;
+
+  // Track timeouts to prevent modal from closing unexpectedly
+  const closeTimeouts = useRef([]);
+
+  // Clear all pending timeouts
+  const clearCloseTimeouts = () => {
+    closeTimeouts.current.forEach((t) => clearTimeout(t));
+    closeTimeouts.current = [];
+  };
+
+  // Function to fix the issue with repeated scanning
+  const handleScanAgain = () => {
+    // Reset scanning state to allow for another scan
+    setScannedData(null);
+    setFoundUser(null);
+    setScanStatus("Ready for next scan");
+    setScanningEnabled(true);
+
+    // Re-initialize scanner if needed
+    if (!scanner) {
       initScanner();
+    }
+  };
+
+  // Update closeModal function for robust scanner cleanup
+  const closeModal = () => {
+    // Clear any pending timeouts
+    clearCloseTimeouts();
+
+    // Disable scanning and reset scan-related state
+    setScanningEnabled(false);
+    setScannedData(null);
+    setNewLogName("");
+    setScanStatus("");
+    setShowDayPassModal(false);
+    setSearchResults([]);
+    setFoundUser(null);
+    setValidatingUser(false);
+
+    // Clean up scanner
+    if (scanner) {
+      stopScanner(scanner).catch((e) =>
+        console.error("Error stopping scanner:", e)
+      );
+      setScanner(null);
+    }
+
+    // Close the modal
+    setModalVisible(false);
+
+    // Enable scanning again after modal is fully closed
+    const t = setTimeout(() => setScanningEnabled(true), 500);
+    closeTimeouts.current.push(t);
+  };
+
+  // When opening the modal, always clear timeouts and re-enable scanning
+  useEffect(() => {
+    if (modalVisible) {
+      // Clear any pending timeouts from previous sessions
+      clearCloseTimeouts();
+
+      // Ensure scanning is enabled for the new session
+      setScanningEnabled(true);
+
+      // Reset scan state
+      setScannedData(null);
+      setFoundUser(null);
+      setScanStatus("Getting camera ready...");
+
+      // Use requestAnimationFrame to ensure DOM is rendered before initializing scanner
+      const raf = requestAnimationFrame(() => {
+        // Small timeout to ensure DOM is fully ready
+        setTimeout(() => {
+          initScanner();
+        }, 100);
+      });
+
+      return () => {
+        // Clean up on modal close or component unmount
+        cancelAnimationFrame(raf);
+        clearCloseTimeouts();
+
+        if (scanner) {
+          stopScanner(scanner).catch(() => {});
+        }
+      };
+    } else {
+      // When modal is closed, make sure to cleanup
+      if (scanner) {
+        stopScanner(scanner).catch(() => {});
+        setScanner(null);
+      }
+
+      // Clear state on modal close
+      setScannedData(null);
+      setFoundUser(null);
+    }
+  }, [modalVisible]);
+
+  // MutationObserver-based scanner initialization for web
+  useEffect(() => {
+    if (Platform.OS !== "web" || !modalVisible) return;
+    let observer = null;
+    let initialized = false;
+
+    function tryInit() {
+      const parent = document.querySelector(".cameraContainer");
+      if (parent && !initialized) {
+        initialized = true;
+        initScanner();
+        if (observer) observer.disconnect();
+      }
+    }
+
+    // Try immediately in case it's already there
+    tryInit();
+
+    if (!initialized) {
+      observer = new MutationObserver(() => {
+        tryInit();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
     }
 
     return () => {
-      if (scanner) {
-        stopScanner(scanner);
-      }
+      if (observer) observer.disconnect();
     };
   }, [modalVisible]);
 
@@ -297,13 +565,16 @@ const AdminDashboard = () => {
             setScanStatus(
               `${data.user.fullName} has already entered the gym today.`
             );
-            setTimeout(() => {
-              setModalVisible(false);
-              setFoundUser(null);
-              setScannedData(null);
-              setNewLogName("");
-              setScanStatus("");
-            }, 2500);
+            if (scanner) {
+              stopScanner(scanner).catch(() => {});
+              setScanner(null);
+            }
+            setScanningEnabled(false);
+            setModalVisible(false);
+            setInfoModalContent(
+              `${data.user.fullName} has already entered the gym today.`
+            );
+            setInfoModalVisible(true);
             return;
           }
 
@@ -312,18 +583,17 @@ const AdminDashboard = () => {
           setScanStatus(
             `${data.user.fullName} (${data.user.userType}) has entered the gym`
           );
-
-          // Refresh logs
           fetchLogs(logSearchQuery);
-
-          // Close modal after 2 seconds
-          setTimeout(() => {
-            setModalVisible(false);
-            setFoundUser(null);
-            setScannedData(null);
-            setNewLogName("");
-            setScanStatus("");
-          }, 2000);
+          if (scanner) {
+            stopScanner(scanner).catch(() => {});
+            setScanner(null);
+          }
+          setScanningEnabled(false);
+          setModalVisible(false);
+          setInfoModalContent(
+            `${data.user.fullName} (${data.user.userType}) has entered the gym`
+          );
+          setInfoModalVisible(true);
         } else if (data.isDayPass) {
           // It's a day pass QR code
           createDayPassEntry(data.name);
@@ -338,7 +608,14 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("QR validation error:", error);
       setScanStatus(`Error: ${error.message}`);
-      setTimeout(() => setScanStatus(""), 3000);
+      if (scanner) {
+        stopScanner(scanner).catch(() => {});
+        setScanner(null);
+      }
+      setScanningEnabled(false);
+      setModalVisible(false);
+      setInfoModalContent(`Error: ${error.message}`);
+      setInfoModalVisible(true);
     } finally {
       setValidatingUser(false);
     }
@@ -348,16 +625,17 @@ const AdminDashboard = () => {
   const createLogEntry = async (userId) => {
     try {
       const admin_id = await storage.getItem("userId");
+      const payload = {
+        userId: userId,
+        loggedBy: admin_id,
+      };
 
       const response = await fetch(`${API_BASE_URL}/add_entry_log.php`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId: userId,
-          loggedBy: admin_id,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -398,25 +676,41 @@ const AdminDashboard = () => {
 
       if (data.success) {
         setScanStatus(`${name} has entered the gym with a day pass`);
-
-        // Refresh logs
         fetchLogs(logSearchQuery);
-
-        // Close modal after 2 seconds
-        setTimeout(() => {
-          setModalVisible(false);
-          setScannedData(null);
-          setNewLogName("");
-          setScanStatus("");
-        }, 2000);
+        if (scanner) {
+          stopScanner(scanner).catch(() => {});
+          setScanner(null);
+        }
+        setScanningEnabled(false);
+        setModalVisible(false);
+        setInfoModalContent(`${name} has entered the gym with a day pass`);
+        setInfoModalVisible(true);
       } else {
         throw new Error(data.message || "Failed to create day pass entry");
       }
     } catch (error) {
       console.error("Day pass creation error:", error);
       setScanStatus(`Error: ${error.message}`);
-      setTimeout(() => setScanStatus(""), 3000);
+      if (scanner) {
+        stopScanner(scanner).catch(() => {});
+        setScanner(null);
+      }
+      setScanningEnabled(false);
+      setModalVisible(false);
+      setInfoModalContent(`Error: ${error.message}`);
+      setInfoModalVisible(true);
     }
+  };
+
+  // Add missing function for day pass confirmation
+  const handleDayPassConfirm = async () => {
+    if (!dayPassName.trim()) {
+      setScanStatus("Please enter a visitor name");
+      return;
+    }
+
+    createDayPassEntry(dayPassName);
+    setShowDayPassModal(false);
   };
 
   // Handle manual name search
@@ -454,100 +748,51 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle QR code scanning with pause/resume capability
-  const handleQrScanned = (decodedText) => {
+  // Add missing function for handling user selection from search
+  const handleSelectUser = async (user) => {
+    setFoundUser(user);
+    setNewLogName(user.fullName);
+    setScanStatus(`User found: ${user.fullName}`);
+
     try {
-      console.log("Scanned QR:", decodedText);
-
-      // Ignore empty scans
-      if (!decodedText || decodedText.trim() === "") {
-        console.warn("Empty QR code data detected");
-        return;
+      await createLogEntry(user.id);
+      setScanStatus(`${user.fullName} (${user.userType}) has entered the gym`);
+      fetchLogs(logSearchQuery);
+      if (scanner) {
+        stopScanner(scanner).catch(() => {});
+        setScanner(null);
       }
-
-      // Set state with scanned data
-      setScannedData(decodedText);
-      setNewLogName(decodedText);
-      setScanStatus("QR code detected! Processing...");
-
-      // Process the QR code
-      validateUserQRAndCreateLog(decodedText);
+      setScanningEnabled(false);
+      setModalVisible(false);
+      setInfoModalContent(
+        `${user.fullName} (${user.userType}) has entered the gym`
+      );
+      setInfoModalVisible(true);
     } catch (error) {
-      console.error("Error processing scanned QR code:", error);
-      setScanStatus("Error processing QR code. Try again.");
-
-      // Resume scanning after error
+      setScanStatus(`Error: ${error.message}`);
       if (scanner) {
-        resumeScanner(scanner);
+        stopScanner(scanner).catch(() => {});
+        setScanner(null);
       }
+      setScanningEnabled(false);
+      setModalVisible(false);
+      setInfoModalContent(`Error: ${error.message}`);
+      setInfoModalVisible(true);
     }
   };
 
-  // Add a reset function to clear scan and restart scanning
-  const resetScanner = () => {
-    // Clear state
-    setScannedData(null);
+  // Helper to open the scan modal and reset all scan state
+  const openScanModal = () => {
     setNewLogName("");
-    setScanStatus("Camera ready. Point at a QR code.");
+    setScannedData(null);
+    setFoundUser(null);
+    setScanStatus("Getting camera ready...");
     setShowDayPassModal(false);
     setSearchResults([]);
-    setFoundUser(null);
-
-    // Resume scanning
-    if (scanner) {
-      resumeScanner(scanner);
-    }
+    setValidatingUser(false);
+    setScanningEnabled(true);
+    setModalVisible(true);
   };
-
-  // Update the closeModal function to properly clean up
-  const closeModal = () => {
-    // Stop the scanner when closing the modal
-    if (scanner) {
-      stopScanner(scanner);
-    }
-
-    // Reset state
-    setModalVisible(false);
-    setScannedData(null);
-    setNewLogName("");
-    setScanStatus("");
-    setShowDayPassModal(false);
-    setSearchResults([]);
-    setFoundUser(null);
-  };
-
-  const toggleDrawer = () => {
-    setIsDrawerOpen(!isDrawerOpen);
-  };
-
-  if (isLogOut) {
-    window.location.href = "/";
-    return null;
-  }
-
-  const handleLogout = async () => {
-    const success = await logout(setIsLoggedIn);
-    if (!success) {
-      showAlert("Error", "Failed to logout. Please try again.");
-    }
-  };
-
-  const showAlert = (message) => {
-    setAlertMessage(message);
-    setShowAlertModal(true);
-  };
-
-  useEffect(() => {
-    if (modalVisible) {
-      initScanner();
-    }
-
-    return () => {
-      if (scanner) {
-        stopScanner(scanner);
-      }
-    };
-  }, [modalVisible]);
 
   const renderMainContent = () => {
     switch (activeSection) {
@@ -571,7 +816,7 @@ const AdminDashboard = () => {
               <Text style={styles.logBookTitle}>LOG BOOK</Text>
               <TouchableOpacity
                 style={styles.addButton}
-                onPress={() => setModalVisible(true)}
+                onPress={openScanModal}
               >
                 <Text style={styles.addButtonText}>ADD LOG</Text>
               </TouchableOpacity>
@@ -714,6 +959,34 @@ const AdminDashboard = () => {
     }
   };
 
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+  };
+
+  if (isLogOut) {
+    window.location.href = "/";
+    return null;
+  }
+
+  // Define handleLogout function properly
+  const handleLogout = async () => {
+    try {
+      const success = await logout(setIsLoggedIn);
+      if (!success) {
+        showAlert("Error", "Failed to logout. Please try again.");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      showAlert("Error", "An unexpected error occurred during logout.");
+    }
+  };
+
+  const showAlert = (message) => {
+    setAlertMessage(message);
+    setShowAlertModal(true);
+  };
+
+  // Make sure renderSidebar can access handleLogout
   const renderSidebar = () => (
     <Animated.View
       style={[
@@ -914,10 +1187,7 @@ const AdminDashboard = () => {
               <View style={styles.dayPassButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setShowDayPassModal(false);
-                    initScanner();
-                  }}
+                  onPress={closeModal}
                 >
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -995,18 +1265,16 @@ const AdminDashboard = () => {
               )}
 
               {/* QR Scanner */}
-              {!scannedData && !foundUser && (
-                <View style={styles.cameraContainer}>
+              {Platform.OS === "web" && !scannedData && !foundUser && (
+                <div className="cameraContainer" style={styles.cameraContainer}>
                   <div
                     id="qr-reader"
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      maxWidth: "650px",
-                      margin: "0 auto",
+                      ...styles.qrReader,
+                      ...getQRReaderSize(),
                     }}
                   />
-                </View>
+                </div>
               )}
 
               {/* Scan status/result */}
@@ -1065,6 +1333,29 @@ const AdminDashboard = () => {
     </Modal>
   );
 
+  // Info Modal
+  const renderInfoModal = () => (
+    <Modal
+      visible={infoModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setInfoModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Scan Result</Text>
+          <Text style={styles.scanStatusText}>{infoModalContent}</Text>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => setInfoModalVisible(false)}
+          >
+            <Text style={styles.modalButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       {!isLargeScreen && (
@@ -1083,6 +1374,9 @@ const AdminDashboard = () => {
 
       {/* QR Scanner Modal */}
       {renderQRModal()}
+
+      {/* Info Modal */}
+      {renderInfoModal()}
 
       {/* Custom Alert Modal */}
       <Modal

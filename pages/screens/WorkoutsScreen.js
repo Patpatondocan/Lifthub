@@ -1421,11 +1421,15 @@ const styles = StyleSheet.create({
     borderRadius: 22.5,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#6397C9",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
     elevation: 3,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(99,151,201,0.3)" }
+      : {
+          shadowColor: "#6397C9",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        }),
   },
   workoutList: {
     padding: 20,
@@ -1435,11 +1439,15 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 2,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }),
   },
   assignedToContainer: {
     flexDirection: "row",
@@ -1530,11 +1538,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
     elevation: 8,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 8px 16px rgba(0,0,0,0.3)" }
+      : {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
+        }),
   },
   modalHeader: {
     flexDirection: "row",
@@ -1608,11 +1620,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
-    shadowColor: "#6397C9",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     elevation: 4,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 4px 8px rgba(99,151,201,0.3)" }
+      : {
+          shadowColor: "#6397C9",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        }),
   },
   editButtonText: {
     color: "#FFFFFF",
@@ -1628,11 +1644,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
-    shadowColor: "#4CAF50",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     elevation: 4,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 4px 8px rgba(76,175,80,0.3)" }
+      : {
+          shadowColor: "#4CAF50",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        }),
   },
   assignButtonText: {
     color: "#FFFFFF",
@@ -1648,11 +1668,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
-    shadowColor: "#FF4444",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     elevation: 4,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0 4px 8px rgba(255,68,68,0.3)" }
+      : {
+          shadowColor: "#FF4444",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        }),
   },
   deleteButtonText: {
     color: "#FFFFFF",

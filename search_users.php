@@ -50,16 +50,16 @@ try {
         exit();
     }
 
-    // Search for users (members and trainers only)
+    // Search for users (members and trainers only), now also by qrCode
     $sql = "SELECT userID, userName, fullName, userType, qrCode 
             FROM tbl_user 
             WHERE (userType = 'member' OR userType = 'trainer') AND 
-                  (fullName LIKE ? OR userName LIKE ?)
+                  (fullName LIKE ? OR userName LIKE ? OR qrCode LIKE ?)
             ORDER BY fullName
             OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY";
     
     $searchParam = '%' . $query . '%';
-    $params = array($searchParam, $searchParam);
+    $params = array($searchParam, $searchParam, $searchParam);
     $stmt = sqlsrv_query($conn, $sql, $params);
 
     if ($stmt === false) {

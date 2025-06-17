@@ -14,14 +14,16 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { QRCodeComponent } from "../../utils/qrUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import WebQRCode from "qrcode.react";
+import QRCodeSVG from "react-native-qrcode-svg";
 
 const MemberProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [qrCodeValue, setQrCodeValue] = useState("");
 
   const [profile, setProfile] = useState({
     id: "",
@@ -87,6 +89,9 @@ const MemberProfileScreen = () => {
           membershipExpiry: data.user.membershipExpiry || "N/A",
           qrCode: data.user.qrCode || `LIFTHUB-MEMBER-${data.user.userID}`,
         });
+        setQrCodeValue(
+          data.user.qrCode || `LIFTHUB-MEMBER-${data.user.userID}`
+        );
       } else {
         throw new Error(data.message || "Failed to load profile");
       }
@@ -212,7 +217,11 @@ const MemberProfileScreen = () => {
 
         <View style={styles.qrContainer}>
           {/* Add key prop to force re-render when value changes */}
-          <QRCodeComponent value={qrValue} size={200} key={qrValue} />
+          {Platform.OS === "web" ? (
+            <WebQRCode value={qrValue} size={200} />
+          ) : (
+            <QRCodeSVG value={qrValue} size={200} />
+          )}
         </View>
       </View>
     );
@@ -468,7 +477,20 @@ const MemberProfileScreen = () => {
               </View>
             </View>
 
-            {renderQRCode()}
+            <View style={styles.qrSection}>
+              <Text style={styles.sectionTitle}>Member ID</Text>
+              <Text style={styles.qrDescription}>
+                Show this QR code for gym access and identification
+              </Text>
+
+              <View style={styles.qrContainer}>
+                {Platform.OS === "web" ? (
+                  <WebQRCode value={qrCodeValue} size={200} />
+                ) : (
+                  <QRCodeSVG value={qrCodeValue} size={200} />
+                )}
+              </View>
+            </View>
 
             <TouchableOpacity
               style={styles.passwordButton}

@@ -1,19 +1,18 @@
-import { AppRegistry, Platform } from "react-native";
 import { registerRootComponent } from "expo";
+import { AppRegistry } from "react-native";
 import App from "./pages/App";
 
-// Polyfill URL for Hermes
+// Polyfill URL for Hermes - use url-parse as direct replacement
 if (typeof URL === "undefined") {
-  global.URL = require("url-parse");
+  const URLParse = require("url-parse");
+  global.URL = URLParse;
 }
 
 const appName = "LiftHub";
-
-// Register the app first
 AppRegistry.registerComponent(appName, () => App);
 
-// Then handle platform-specific initialization
-if (Platform.OS === "web") {
+// Handle web platform rendering
+if (typeof document !== "undefined") {
   const rootTag =
     document.getElementById("root") || document.getElementById("app");
   AppRegistry.runApplication(appName, {
