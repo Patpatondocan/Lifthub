@@ -62,9 +62,9 @@ try {
     // Fetch the user data
     $user = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
     
-    // If user is a trainer, get assigned trainees count
+    // If user is a trainer, get assigned trainees count (only active assignments)
     if ($user['userType'] === 'trainer') {
-        $countSql = "SELECT COUNT(*) as count FROM tbl_trainerAssignment WHERE trainerID = ?";
+        $countSql = "SELECT COUNT(*) as count FROM tbl_trainerAssignment WHERE trainerID = ? AND isActive = 1";
         $countParams = array($userID);
         $countStmt = sqlsrv_query($conn, $countSql, $countParams);
         
@@ -77,7 +77,7 @@ try {
     
     // Calculate membership status
     $currentTime = time();
-    $membershipTimestamp = (int)$user['membership'];
+    $membershipTimestamp = strtotime($user['membership']); // FIXED: use strtotime for ISO string
     
     // Add membership status and expiry info
     $user['membershipStatus'] = $membershipTimestamp > $currentTime ? 'active' : 'inactive';

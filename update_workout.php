@@ -93,36 +93,29 @@ try {
         throw new Exception("Failed to update workout");
     }
 
-    // Delete existing routines
-    $deleteSql = "DELETE FROM tbl_routine WHERE workoutID = ?";
-    $deleteParams = [$data['id']];
-    $deleteStmt = sqlsrv_query($conn, $deleteSql, $deleteParams);
-
-    if ($deleteStmt === false) {
-        throw new Exception("Failed to delete existing routines");
-    }
-
-    // Insert new routines
+    // Insert new routines with isActive=1 (for new exercises only)
     foreach ($data['exercises'] as $exercise) {
-        // Validate exercise data
-        if (empty($exercise['name']) || 
-            !isset($exercise['sets']) || 
-            !isset($exercise['reps'])) {
-            throw new Exception("Invalid exercise data");
-        }
+        // Only insert if this is a new exercise (no routineID)
+        if (empty($exercise['routineID'])) {
+            if (empty($exercise['name']) || 
+                !isset($exercise['sets']) || 
+                !isset($exercise['reps'])) {
+                throw new Exception("Invalid exercise data");
+            }
 
-        $routineSql = "INSERT INTO tbl_routine (workoutID, exerciseName, sets, reps) 
-                       VALUES (?, ?, ?, ?)";
-        $routineParams = [
-            $data['id'],
-            $exercise['name'],
-            $exercise['sets'],
-            $exercise['reps']
-        ];
-        
-        $routineStmt = sqlsrv_query($conn, $routineSql, $routineParams);
-        if ($routineStmt === false) {
-            throw new Exception("Failed to insert routine");
+            $routineSql = "INSERT INTO tbl_routine (workoutID, exerciseName, sets, reps, isActive) 
+                           VALUES (?, ?, ?, ?, 1)";
+            $routineParams = [
+                $data['id'],
+                $exercise['name'],
+                $exercise['sets'],
+                $exercise['reps']
+            ];
+            
+            $routineStmt = sqlsrv_query($conn, $routineSql, $routineParams);
+            if ($routineStmt === false) {
+                throw new Exception("Failed to insert routine");
+            }
         }
     }
 

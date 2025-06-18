@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Platform } from "react-native";
+import { Platform, Modal } from "react-native";
 import {
   Ionicons,
   MaterialIcons,
@@ -23,6 +23,7 @@ import styles from "./LoginScreenStyles";
 import MemberHome from "./MemberHome";
 import { AuthProvider, AuthContext } from "../context/AuthContext";
 import { storage } from "../utils/storage";
+import { CustomAlertProvider, useCustomAlert } from "../components/CustomAlert";
 
 // Storage utility to handle both web and mobile platforms
 const Storage = {
@@ -84,6 +85,20 @@ const LoginScreen = () => {
   const [loginStatus, setLoginStatus] = useState("");
   const [isLoggedInState, setIsLoggedInState] = useState(false);
   const [userTypeState, setUserTypeState] = useState(null);
+  const [showLoginErrorModal, setShowLoginErrorModal] = useState(false);
+  const [loginErrorMessage, setLoginErrorMessage] = useState("");
+  // Reusable alert modal state
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+
+  // Reusable showAlert function
+  const showCustomAlert = (title, message) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setShowAlertModal(true);
+  };
+
   // Check if running on Android
   const isAndroid = Platform.OS === "android";
   // Check if running on web
@@ -164,6 +179,9 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     if (!email || !password) {
       setLoginStatus("Please enter both email and password");
+      setLoginErrorMessage("Please enter both email and password");
+      setShowLoginErrorModal(true);
+      showAlertSafe("Login Failed", "Please enter both email and password");
       return;
     }
 
@@ -213,11 +231,20 @@ const LoginScreen = () => {
       } else {
         console.error("Login failed:", result.message);
         setLoginStatus(result.message || "Invalid credentials");
+        setLoginErrorMessage(result.message || "Invalid credentials");
+        setShowLoginErrorModal(true);
+        showAlertSafe("Login Failed", result.message || "Invalid credentials");
         setPassword(""); // Clear password field on failed login
       }
     } catch (error) {
       console.error("Login error:", error);
-      setLoginStatus("Connection error. Please try again.");
+      setLoginStatus("Connection Invalid Credentials. Please try again.");
+      setLoginErrorMessage("Connection Invalid Credentials. Please try again.");
+      setShowLoginErrorModal(true);
+      showAlertSafe(
+        "Login Error",
+        "Connection Invalid Credentials. Please try again."
+      );
       setPassword(""); // Clear password field on error
     }
   };
@@ -282,48 +309,122 @@ const LoginScreen = () => {
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
-        >
-          <View style={styles.content}>
-            <View style={styles.logoContainer}>
-              <Ionicons name="barbell-outline" size={80} color="#6397C9" />
-              <Text style={styles.logoText}>LiftHub</Text>
-            </View>
-            <View style={styles.formContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#808080"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#808080"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}
+    <CustomAlertProvider>
+      <AuthProvider>
+        <SafeAreaView style={styles.container}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardAvoidingView}
+          >
+            <View style={styles.content}>
+              <View style={styles.logoContainer}>
+                <Ionicons name="barbell-outline" size={80} color="#6397C9" />
+                <Text style={styles.logoText}>LiftHub</Text>
+              </View>
+              <View style={styles.formContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#808080"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#808080"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={handleLogin}
+                >
+                  <Text style={styles.loginButtonText}>Log In</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.loginStatus}>{loginStatus}</Text>
+              {/* Login Error Modal */}
+              <Modal
+                visible={showLoginErrorModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowLoginErrorModal(false)}
               >
-                <Text style={styles.loginButtonText}>Log In</Text>
-              </TouchableOpacity>
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.7)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "#1A1A1A",
+                      padding: 30,
+                      borderRadius: 16,
+                      alignItems: "center",
+                      maxWidth: 320,
+                    }}
+                  >
+                    <Ionicons
+                      name="alert-circle-outline"
+                      size={48}
+                      color="#FF4444"
+                      style={{ marginBottom: 10 }}
+                    />
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontSize: 18,
+                        fontWeight: "bold",
+                        marginBottom: 10,
+                      }}
+                    >
+                      Login Failed
+                    </Text>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontSize: 15,
+                        textAlign: "center",
+                        marginBottom: 20,
+                      }}
+                    >
+                      {loginErrorMessage}
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#6397C9",
+                        paddingVertical: 10,
+                        paddingHorizontal: 30,
+                        borderRadius: 8,
+                      }}
+                      onPress={() => setShowLoginErrorModal(false)}
+                    >
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontWeight: "bold",
+                          fontSize: 16,
+                        }}
+                      >
+                        OK
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+              <View style={styles.footer}></View>
             </View>
-            <Text style={styles.loginStatus}>{loginStatus}</Text>
-            <View style={styles.footer}></View>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </AuthProvider>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </AuthProvider>
+    </CustomAlertProvider>
   );
 };
 

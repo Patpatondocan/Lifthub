@@ -14,6 +14,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { createPortal } from "react-dom";
 
 const FeedbackSection = () => {
   const [feedback, setFeedback] = useState([]);
@@ -136,6 +137,36 @@ const FeedbackSection = () => {
     }
   };
 
+  // Inject print CSS for printable section (web only)
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const style = document.createElement("style");
+      style.innerHTML = `
+        #printable-feedback { display: none; }
+        @media print {
+          body * { display: none !important; }
+          #printable-feedback, #printable-feedback * {
+            display: block !important;
+            color: #000 !important;
+            background: #fff !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      return () => {
+        document.head.removeChild(style);
+      };
+    }
+  }, []);
+
+  // Print feedback (web only)
+  const printFeedback = () => {
+    const printable = document.getElementById("printable-feedback");
+    if (printable) printable.style.display = "block";
+    window.print();
+    if (printable) printable.style.display = "none";
+  };
+
   // Filter button component
   const FilterButton = ({ title, value }) => (
     <TouchableOpacity
@@ -229,6 +260,16 @@ const FeedbackSection = () => {
         </View>
       </View>
 
+      {/* Feedback Date */}
+      <View style={{ marginBottom: 10 }}>
+        <Text style={{ color: "#6397C9", fontWeight: "bold" }}>Date:</Text>
+        <Text style={{ color: "#fff" }}>
+          {selectedFeedback.date
+            ? new Date(selectedFeedback.date).toLocaleString()
+            : "N/A"}
+        </Text>
+      </View>
+
       {selectedFeedback?.workoutName && (
         <View style={styles.modalWorkout}>
           <Text style={styles.modalLabel}>Workout:</Text>
@@ -261,6 +302,16 @@ const FeedbackSection = () => {
         {/* Header with search bar */}
         <View style={styles.headerTop}>
           <Text style={styles.title}>User Feedback</Text>
+          {/* Print Button (web only) */}
+          {Platform.OS === "web" && (
+            <TouchableOpacity
+              style={[styles.submitButton, { marginLeft: 20 }]}
+              onPress={printFeedback}
+            >
+              <Ionicons name="print-outline" size={20} color="#FFF" />
+              <Text style={styles.submitButtonText}>Print Feedback</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.searchContainer}>
@@ -382,6 +433,50 @@ const FeedbackSection = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Hidden printable section for web using portal */}
+      {Platform.OS === "web" &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            id="printable-feedback"
+            style={{
+              display: "none",
+              background: "#fff",
+              color: "#000",
+              padding: 32,
+            }}
+          >
+            <h1 style={{ textAlign: "center" }}>Feedback Reports</h1>
+            {filteredFeedback.map((item, idx) => (
+              <div
+                key={item.id || idx}
+                style={{
+                  marginBottom: 24,
+                  borderBottom: "1px solid #ccc",
+                  paddingBottom: 12,
+                }}
+              >
+                <div>
+                  <strong>User:</strong> {item.userName} ({item.userType})
+                </div>
+                {item.workoutName && (
+                  <div>
+                    <strong>Workout:</strong> {item.workoutName}
+                  </div>
+                )}
+                <div>
+                  <strong>Date:</strong>{" "}
+                  {item.date ? new Date(item.date).toLocaleString() : "N/A"}
+                </div>
+                <div>
+                  <strong>Feedback:</strong> {item.text}
+                </div>
+              </div>
+            ))}
+          </div>,
+          document.body
+        )}
     </View>
   );
 };

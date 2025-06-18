@@ -52,7 +52,7 @@ try {
                    FORMAT(a.assignmentDate, 'yyyy-MM-dd') as assignmentDate
             FROM tbl_user u
             JOIN tbl_trainerAssignment a ON u.userID = a.memberID
-            WHERE a.trainerID = ? AND u.userType = 'member'
+            WHERE a.trainerID = ? AND u.userType = 'member' AND a.isActive = 1
             ORDER BY u.fullName";
     
     $params = array($trainerID);

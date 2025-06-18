@@ -68,7 +68,7 @@ try {
                               FORMAT(ta.assignmentDate, 'yyyy-MM-dd') as assignmentDate
                        FROM tbl_trainerAssignment ta
                        JOIN tbl_user u ON ta.memberID = u.userID
-                       WHERE ta.trainerID = ?
+                       WHERE ta.trainerID = ? AND ta.isActive = 1
                        ORDER BY u.fullName";
         
         $traineesParams = array($trainerID);
@@ -122,7 +122,7 @@ try {
     } else {
         // Get all trainers with trainee counts
         $trainersSql = "SELECT u.userID, u.userName, u.fullName, u.email, u.contactNum,
-                              COUNT(ta.assignmentID) as traineeCount
+                              COUNT(CASE WHEN ta.isActive = 1 THEN ta.assignmentID END) as traineeCount
                        FROM tbl_user u
                        LEFT JOIN tbl_trainerAssignment ta ON u.userID = ta.trainerID
                        WHERE u.userType = 'trainer'

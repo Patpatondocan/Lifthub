@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import WebQRCode from "qrcode.react";
 import QRCodeSVG from "react-native-qrcode-svg";
+import { format, differenceInDays, isBefore, parseISO } from "date-fns";
 
 const MemberProfileScreen = () => {
   const [loading, setLoading] = useState(true);
@@ -198,6 +199,64 @@ const MemberProfileScreen = () => {
       }
     } catch (error) {
       Alert.alert("Error", error.message);
+    }
+  };
+
+  // Helper to get membership status, color, and days left
+  const getMembershipInfo = (expiry) => {
+    if (
+      !expiry ||
+      expiry === "N/A" ||
+      expiry === "1970-01-01" ||
+      expiry === "1970-01-01T00:00:00.000Z"
+    ) {
+      return {
+        status: "Inactive",
+        color: "#888",
+        daysLeft: null,
+        label: "Inactive",
+        showExpiry: false,
+      };
+    }
+    let expiryDate;
+    try {
+      expiryDate = typeof expiry === "string" ? parseISO(expiry) : expiry;
+      if (isNaN(expiryDate.getTime())) throw new Error();
+    } catch {
+      return {
+        status: "Invalid",
+        color: "#888",
+        daysLeft: null,
+        label: "Invalid date",
+        showExpiry: false,
+      };
+    }
+    const today = new Date();
+    const daysLeft = differenceInDays(expiryDate, today);
+    if (isBefore(expiryDate, today)) {
+      return {
+        status: "Expired",
+        color: "#FF4444",
+        daysLeft,
+        label: "Expired",
+        showExpiry: false,
+      };
+    } else if (daysLeft <= 7) {
+      return {
+        status: "Expiring Soon",
+        color: "#FFD700",
+        daysLeft,
+        label: "Expiring Soon",
+        showExpiry: true,
+      };
+    } else {
+      return {
+        status: "Active",
+        color: "#4CAF50",
+        daysLeft,
+        label: "Active",
+        showExpiry: true,
+      };
     }
   };
 
@@ -444,12 +503,42 @@ const MemberProfileScreen = () => {
                   <Ionicons name="person" size={40} color="#FFFFFF" />
                 </View>
                 <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{profile.name}</Text>
-                  <View style={styles.memberBadge}>
-                    <Ionicons name="fitness" size={14} color="#FFFFFF" />
-                    <Text style={styles.memberBadgeText}>
-                      {profile.membershipStatus} Member
-                    </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Text style={styles.profileName}>{profile.name}</Text>
+                    {(() => {
+                      const info = getMembershipInfo(profile.membershipExpiry);
+                      return (
+                        <View
+                          style={{
+                            backgroundColor: info.color,
+                            borderRadius: 16,
+                            paddingHorizontal: 12,
+                            paddingVertical: 4,
+                            marginLeft: 10,
+                            minWidth: 70,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontWeight: "bold",
+                              fontSize: 13,
+                              textTransform: "lowercase",
+                            }}
+                          >
+                            {info.label} Member
+                          </Text>
+                        </View>
+                      );
+                    })()}
                   </View>
                 </View>
               </View>
@@ -470,9 +559,89 @@ const MemberProfileScreen = () => {
                 <View style={styles.detailItem}>
                   <Ionicons name="calendar-outline" size={20} color="#6397C9" />
                   <Text style={styles.detailLabel}>Membership:</Text>
-                  <Text style={styles.detailValue}>
-                    Expires: {profile.membershipExpiry}
-                  </Text>
+                  {(() => {
+                    const info = getMembershipInfo(profile.membershipExpiry);
+                    return (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          flex: 1,
+                          flexWrap: "wrap",
+                          gap: 6,
+                          marginLeft: 8,
+                        }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: info.color,
+                            borderRadius: 8,
+                            paddingHorizontal: 10,
+                            paddingVertical: 3,
+                            marginRight: 10,
+                            minWidth: 70,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontWeight: "bold",
+                              fontSize: 12,
+                            }}
+                          >
+                            {info.label}
+                          </Text>
+                        </View>
+                        {info.showExpiry ? (
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontSize: 14,
+                              marginRight: 10,
+                            }}
+                          >
+                            Expires:{" "}
+                            {format(
+                              typeof profile.membershipExpiry === "string"
+                                ? parseISO(profile.membershipExpiry)
+                                : profile.membershipExpiry,
+                              "MMM dd, yyyy"
+                            )}
+                          </Text>
+                        ) : (
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontSize: 14,
+                              marginRight: 10,
+                            }}
+                          >
+                            No active membership
+                          </Text>
+                        )}
+                        {info.daysLeft !== null &&
+                          info.daysLeft >= 0 &&
+                          info.showExpiry && (
+                            <Text
+                              style={{
+                                color: info.color,
+                                marginLeft: 0,
+                                fontWeight: "bold",
+                                fontSize: 13,
+                              }}
+                            >
+                              {info.daysLeft === 0
+                                ? "(Expires today)"
+                                : info.daysLeft === 1
+                                ? "(1 day left)"
+                                : `(${info.daysLeft} days left)`}
+                            </Text>
+                          )}
+                      </View>
+                    );
+                  })()}
                 </View>
               </View>
             </View>
@@ -523,10 +692,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 25,
+    paddingBottom: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: "#333333",
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#FFFFFF",
   },
@@ -534,20 +706,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#6397C9",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
   editButtonText: {
     color: "#FFFFFF",
-    marginLeft: 5,
-    fontWeight: "bold",
+    marginLeft: 6,
+    fontWeight: "600",
+    fontSize: 14,
   },
   profileCard: {
     backgroundColor: "#1A1A1A",
-    borderRadius: 12,
+    borderRadius: 15,
     padding: 20,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#333333",
   },
   profileHeader: {
     flexDirection: "row",
@@ -562,13 +737,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
+    borderWidth: 3,
+    borderColor: "#333333",
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
     marginBottom: 5,
   },
@@ -577,58 +754,72 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 12,
     alignSelf: "flex-start",
   },
   memberBadgeText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "bold",
-    marginLeft: 5,
+    fontWeight: "600",
+    marginLeft: 4,
   },
   profileDetails: {
     borderTopWidth: 1,
-    borderTopColor: "#333",
+    borderTopColor: "#333333",
     paddingTop: 15,
+    gap: 12,
   },
   detailItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    backgroundColor: "#2A2A2A",
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#6397C9",
   },
   detailLabel: {
     color: "#CCCCCC",
-    width: 80,
+    width: 90, // Changed from 70 to 90 to accommodate "Membership:" text
     marginLeft: 10,
+    fontSize: 14,
+    fontWeight: "500",
   },
   detailValue: {
     color: "#FFFFFF",
     flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
   },
   qrSection: {
     backgroundColor: "#1A1A1A",
-    borderRadius: 12,
+    borderRadius: 15,
     padding: 20,
     marginBottom: 20,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#333333",
   },
   sectionTitle: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   qrDescription: {
     color: "#CCCCCC",
     textAlign: "center",
     marginBottom: 20,
+    fontSize: 14,
+    lineHeight: 20,
   },
   qrContainer: {
     backgroundColor: "#FFFFFF",
     padding: 15,
-    borderRadius: 12,
-    overflow: "hidden",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#6397C9",
   },
   passwordButton: {
     backgroundColor: "#333333",
@@ -638,34 +829,42 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#555555",
   },
   buttonIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   passwordButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "600",
   },
   formContainer: {
     backgroundColor: "#1A1A1A",
-    borderRadius: 12,
+    borderRadius: 15,
     padding: 20,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#333333",
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 16,
   },
   label: {
     color: "#6397C9",
-    marginBottom: 5,
+    marginBottom: 6,
+    fontSize: 15,
+    fontWeight: "600",
   },
   inputWithIcon: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#111111",
+    backgroundColor: "#2A2A2A",
     borderRadius: 8,
     paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#444444",
   },
   inputIcon: {
     marginRight: 10,
@@ -674,36 +873,40 @@ const styles = StyleSheet.create({
     flex: 1,
     color: "#FFFFFF",
     padding: 12,
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: "400",
   },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 16,
+    gap: 12,
   },
   saveButton: {
     backgroundColor: "#6397C9",
-    padding: 12,
+    padding: 14,
     borderRadius: 8,
     alignItems: "center",
     flex: 1,
-    marginRight: 10,
   },
   saveButtonText: {
     color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 16,
+    fontWeight: "600",
+    fontSize: 15,
   },
   cancelButton: {
     backgroundColor: "#333333",
-    padding: 12,
+    padding: 14,
     borderRadius: 8,
     alignItems: "center",
     flex: 1,
+    borderWidth: 1,
+    borderColor: "#555555",
   },
   cancelButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: "500",
   },
   loadingContainer: {
     flex: 1,
@@ -713,7 +916,9 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: "#FFFFFF",
-    marginTop: 10,
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: "400",
   },
   errorContainer: {
     flex: 1,
@@ -724,9 +929,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#FF4444",
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 20,
     textAlign: "center",
+    lineHeight: 22,
   },
   retryButton: {
     backgroundColor: "#6397C9",
@@ -736,7 +942,8 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: "#FFFFFF",
-    fontWeight: "bold",
+    fontWeight: "600",
+    fontSize: 15,
   },
 });
 

@@ -49,37 +49,37 @@ try {
     $trainerID = $data['trainerID'];
     $traineeID = $data['traineeID'];
     
-    error_log("Removing trainee ID {$traineeID} from trainer ID {$trainerID}");
+    error_log("Removing trainee ID {$traineeID} from trainer ID {$trainerID} (soft delete)");
 
-    // Delete from tbl_trainerAssignment
-    $deleteSql = "DELETE FROM tbl_trainerAssignment 
-                 WHERE trainerID = ? AND memberID = ?";
+    // Soft delete: set isActive = 0 instead of deleting
+    $softDeleteSql = "UPDATE tbl_trainerAssignment 
+                      SET isActive = 0 
+                      WHERE trainerID = ? AND memberID = ? AND isActive = 1";
+    $softDeleteParams = array($trainerID, $traineeID);
+    $softDeleteStmt = sqlsrv_query($conn, $softDeleteSql, $softDeleteParams);
     
-    $deleteParams = array($trainerID, $traineeID);
-    $deleteStmt = sqlsrv_query($conn, $deleteSql, $deleteParams);
-    
-    if ($deleteStmt === false) {
+    if ($softDeleteStmt === false) {
         $errors = sqlsrv_errors();
         error_log("SQL Error: " . print_r($errors, true));
-        throw new Exception("Failed to remove trainer assignment: " . $errors[0]['message']);
+        throw new Exception("Failed to soft delete trainer assignment: " . $errors[0]['message']);
     }
     
     // Check if any rows were affected
-    $rowsAffected = sqlsrv_rows_affected($deleteStmt);
+    $rowsAffected = sqlsrv_rows_affected($softDeleteStmt);
     if ($rowsAffected === 0) {
-        error_log("No assignments found to delete");
+        error_log("No assignments found to soft delete");
         echo json_encode([
             "success" => false,
-            "message" => "No trainer-trainee relationship found to remove"
+            "message" => "No active trainer-trainee relationship found to remove"
         ]);
         exit;
     }
     
-    error_log("Trainee removal successful. Rows affected: $rowsAffected");
+    error_log("Trainee soft removal successful. Rows affected: $rowsAffected");
 
     echo json_encode([
         "success" => true,
-        "message" => "Trainee removed successfully"
+        "message" => "Trainee removed (soft delete) successfully"
     ]);
     
 } catch (Exception $e) {

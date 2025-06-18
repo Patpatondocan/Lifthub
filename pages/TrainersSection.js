@@ -30,6 +30,7 @@ const TrainersSection = () => {
   // Add these new state variables for trainee removal
   const [traineeToRemove, setTraineeToRemove] = useState(null);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [selectedTrainerDetails, setSelectedTrainerDetails] = useState(null);
 
   // API base URL based on platform
   const API_BASE_URL = Platform.select({
@@ -203,13 +204,13 @@ const TrainersSection = () => {
 
         setTraineeToRemove(null);
         setShowRemoveModal(false);
-        toast.success("Trainee removed successfully");
+        Alert.alert("Success", "Trainee removed successfully");
       } else {
         throw new Error(data.message || "Failed to remove trainee");
       }
     } catch (error) {
       console.error("Error removing trainee:", error);
-      toast.error(error.message || "Error removing trainee");
+      Alert.alert("Error", error.message || "Error removing trainee");
     } finally {
       setIsLoading(false);
       setShowRemoveModal(false);

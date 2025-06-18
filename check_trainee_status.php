@@ -84,7 +84,7 @@ try {
         SELECT ta.trainerID, u.userName, u.fullName as trainerName 
         FROM tbl_trainerAssignment ta
         JOIN tbl_user u ON ta.trainerID = u.userID
-        WHERE ta.memberID = ?";
+        WHERE ta.memberID = ? AND ta.isActive = 1";
 
     $checkTrainerParams = array($userId);
     $checkTrainerStmt = sqlsrv_query($conn, $checkTrainerQuery, $checkTrainerParams);

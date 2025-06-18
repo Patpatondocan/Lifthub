@@ -69,7 +69,7 @@ try {
         // Get exercises (routines) for this workout from tbl_routine
         $routinesSql = "SELECT routineID, exerciseName as name, sets, reps 
                         FROM tbl_routine 
-                        WHERE workoutID = ?";
+                        WHERE workoutID = ? AND isActive = 1";
         $routinesParams = array($row['workoutID']);
         $routinesStmt = sqlsrv_query($conn, $routinesSql, $routinesParams);
         

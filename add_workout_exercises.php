@@ -46,7 +46,7 @@ try {
     // Add each exercise one by one - no transaction to avoid rollback issues
     $successCount = 0;
     foreach ($data['exercises'] as $exercise) {
-        $sql = "INSERT INTO tbl_routine (workoutID, exerciseName, sets, reps) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO tbl_routine (workoutID, exerciseName, sets, reps, isActive) VALUES (?, ?, ?, ?, 1)";
         $params = array(
             $data['workoutID'],
             $exercise['exerciseName'],

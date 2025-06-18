@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { format, differenceInDays, isBefore, parseISO } from "date-fns";
 import Slider from "@react-native-community/slider";
+import { useCustomAlert } from "../components/CustomAlert";
 
 const MembersSection = ({ onExpiringMembersUpdate }) => {
   // State variables - all hooks must be at the top level
@@ -71,6 +72,24 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
 
   // Replace with your actual API base URL
   const API_BASE_URL = "http://localhost/lifthub";
+  let showAlert = (opts) => {
+    if (typeof window !== "undefined" && window.alert) {
+      window.alert(
+        (opts && opts.title ? opts.title + ": " : "") +
+          (opts && opts.message ? opts.message : "")
+      );
+    }
+  };
+  try {
+    if (typeof useCustomAlert === "function") {
+      const alertContext = useCustomAlert();
+      if (alertContext && typeof alertContext.showAlert === "function") {
+        showAlert = alertContext.showAlert;
+      }
+    }
+  } catch (e) {
+    // fallback already set
+  }
 
   useEffect(() => {
     const loadUserType = async () => {
@@ -164,7 +183,7 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
       }
     } catch (err) {
       setError(err.message);
-      Alert.alert("Error", err.message);
+      showAlert({ title: "Error", message: err.message });
     } finally {
       setLoading(false);
     }
@@ -265,19 +284,22 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
         throw new Error(result.message || "Failed to add membership");
       }
     } catch (error) {
-      Alert.alert("Error", error.message);
+      showAlert({ title: "Error", message: error.message });
     }
   };
 
   // Handle reset password
   const handleResetPassword = async () => {
     if (!selectedMember) {
-      Alert.alert("Error", "No member selected");
+      showAlert({ title: "Error", message: "No member selected" });
       return;
     }
 
     if (!staffPassword) {
-      Alert.alert("Error", "Please enter your staff password for confirmation");
+      showAlert({
+        title: "Error",
+        message: "Please enter your staff password for confirmation",
+      });
       return;
     }
 
@@ -327,11 +349,17 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
         setShowResetPassword(false);
         setStaffPassword("");
       } else {
-        Alert.alert("Error", result.message || "Failed to reset password");
+        showAlert({
+          title: "Error",
+          message: result.message || "Failed to reset password",
+        });
       }
     } catch (error) {
       console.error("Reset password error:", error);
-      Alert.alert("Error", error.message || "An unexpected error occurred");
+      showAlert({
+        title: "Error",
+        message: error.message || "An unexpected error occurred",
+      });
     } finally {
       setLoading(false);
     }
@@ -349,8 +377,35 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
     ];
     const missingFields = requiredFields.filter((field) => !newMember[field]);
 
+    // Validate contact number: only digits and + allowed
+    const contactNumPattern = /^\+?\d+$/;
+    if (newMember.contactNum && !contactNumPattern.test(newMember.contactNum)) {
+      showAlert({
+        title: "Invalid Contact Number",
+        message:
+          "Contact number must contain only digits and an optional leading +.",
+      });
+      return;
+    }
+
+    // Length validation (min 8, max 15 digits, excluding '+')
+    if (newMember.contactNum) {
+      const digitsOnly = newMember.contactNum.replace(/^\+/, "");
+      if (digitsOnly.length < 8 || digitsOnly.length > 15) {
+        showAlert({
+          title: "Invalid Contact Number Length",
+          message: "Contact number must be between 8 and 15 digits.",
+        });
+        return;
+      }
+    }
+
     if (missingFields.length > 0) {
       setError(`Please complete these fields: ${missingFields.join(", ")}`);
+      showAlert({
+        title: "Missing Fields",
+        message: `Please complete these fields: ${missingFields.join(", ")}`,
+      });
       return;
     }
 
@@ -458,7 +513,7 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
       }
     } catch (error) {
       console.error("Add member error:", error);
-      Alert.alert("Error", error.message);
+      showAlert({ title: "Error", message: error.message });
     } finally {
       setLoading(false);
     }
@@ -479,6 +534,10 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
 
     if (missingFields.length > 0) {
       setError(`Please complete these fields: ${missingFields.join(", ")}`);
+      showAlert({
+        title: "Missing Fields",
+        message: `Please complete these fields: ${missingFields.join(", ")}`,
+      });
       return;
     }
 
@@ -527,7 +586,10 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
             userType: "trainer",
           });
 
-          Alert.alert("Success", `${staffData.userType} added successfully`);
+          showAlert({
+            title: "Success",
+            message: `${staffData.userType} added successfully`,
+          });
         } else {
           throw new Error(
             data.message || `Failed to add ${staffData.userType}`
@@ -539,7 +601,7 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
       }
     } catch (error) {
       console.error("Add trainer/staff error:", error);
-      Alert.alert("Error", error.message);
+      showAlert({ title: "Error", message: error.message });
     } finally {
       setLoading(false);
     }
@@ -668,7 +730,7 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
 
         return (
           <TouchableOpacity
-            key={member.userID}
+            key={member.userID || member.id || member.username || index}
             style={styles.modernMemberCard}
             onPress={() => handleMemberClick(member)}
           >
@@ -839,12 +901,10 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
             <View style={styles.emptyStateIcon}>
               <Ionicons name="people-outline" size={64} color="#333" />
             </View>
-            <Text style={styles.emptyStateTitle}>No Members Found</Text>{" "}
-            {/* Fixed */}
+            <Text style={styles.emptyStateTitle}>No Members Found</Text>
             <Text style={styles.emptyStateSubtitle}>
               Try adjusting your search criteria
-            </Text>{" "}
-            {/* Fixed */}
+            </Text>
           </View>
         ) : (
           <View style={styles.membersListContainer}>
@@ -936,18 +996,78 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
         onRequestClose={() => setShowAddMembership(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Membership</Text>
+          <View
+            style={[
+              styles.modalContent,
+              { alignItems: "stretch", maxWidth: 420 },
+            ]}
+          >
+            {" "}
+            {/* Slightly wider for better layout */}
+            <View style={[styles.modalHeader, { marginBottom: 0 }]}>
+              {" "}
+              {/* Remove bottom margin for tighter grouping */}
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={28}
+                  color="#6397C9"
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={styles.modalTitle}>Add Membership</Text>
+              </View>
               <TouchableOpacity onPress={() => setShowAddMembership(false)}>
                 <Ionicons name="close-circle" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-
-            <Text style={styles.modalSubtitle}>
-              Extend membership for {selectedMember?.name}
+            <Text style={[styles.modalSubtitle, { marginBottom: 20 }]}>
+              Extend membership for{" "}
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                {selectedMember?.name}
+              </Text>
             </Text>
-
+            {/* Quick-pick buttons for common durations */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                marginBottom: 18,
+                gap: 10,
+              }}
+            >
+              {[1, 3, 6, 12].map((months) => (
+                <TouchableOpacity
+                  key={`membership-option-${months}`}
+                  style={[
+                    styles.membershipOption,
+                    sliderValue === months && {
+                      backgroundColor: "#6397C9",
+                      borderColor: "#6397C9",
+                    },
+                  ]}
+                  onPress={() => setSliderValue(months)}
+                >
+                  <Text
+                    style={{
+                      color: sliderValue === months ? "#fff" : "#6397C9",
+                      fontWeight: "bold",
+                      fontSize: 16,
+                    }}
+                  >
+                    {months}
+                  </Text>
+                  <Text
+                    style={{
+                      color: sliderValue === months ? "#fff" : "#6397C9",
+                      fontSize: 12,
+                    }}
+                  >
+                    {months === 1 ? "Month" : "Months"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {/* Slider for custom duration */}
             <View style={styles.sliderContainer}>
               <Text style={styles.sliderValueText}>
                 {sliderValue} month{sliderValue !== 1 ? "s" : ""}
@@ -968,36 +1088,28 @@ const MembersSection = ({ onExpiringMembersUpdate }) => {
                 <Text style={styles.sliderLabel}>12</Text>
               </View>
             </View>
-
-            {/* Fix missing key prop in membership options */}
-            <View style={styles.membershipOptions}>
-              {[1, 3, 6, 12].map((months) => (
-                <TouchableOpacity
-                  key={`membership-option-${months}`} // Add unique key prop here
-                  style={styles.membershipOption}
-                  onPress={() => handleAddMembership(months)}
-                >
-                  <Text style={styles.membershipMonths}>{months}</Text>
-                  <Text style={styles.membershipLabel}>
-                    {months === 1 ? "Month" : "Months"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            {/* Action buttons horizontally aligned */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 10,
+                gap: 10,
+              }}
+            >
+              <TouchableOpacity
+                style={[styles.submitButton, { flex: 1 }]}
+                onPress={() => handleAddMembership(sliderValue)}
+              >
+                <Text style={styles.submitButtonText}>Add Membership</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.cancelButton, { flex: 1 }]}
+                onPress={() => setShowAddMembership(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={() => handleAddMembership(sliderValue)}
-            >
-              <Text style={styles.submitButtonText}>Add Membership</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowAddMembership(false)}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>

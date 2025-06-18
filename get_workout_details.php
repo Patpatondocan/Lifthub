@@ -95,7 +95,7 @@ try {
     // Get workout exercises based on your tbl_routine schema
     $exercisesSql = "SELECT routineID, exerciseName, sets, reps
                      FROM tbl_routine
-                     WHERE workoutID = ?
+                     WHERE workoutID = ? AND isActive = 1
                      ORDER BY routineID";
     
     $exercisesParams = array($workoutID);

@@ -1213,7 +1213,7 @@ const AdminDashboard = () => {
                   />
                   <TextInput
                     style={styles.searchInput}
-                    placeholder="Scan QR code or search by name"
+                    placeholder="Search by name"
                     placeholderTextColor="#666"
                     value={newLogName}
                     onChangeText={handleManualNameSearch}

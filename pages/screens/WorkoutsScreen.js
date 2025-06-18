@@ -525,7 +525,7 @@ const WorkoutsScreen = ({ navigation }) => {
 
       await fetchWorkouts();
       setSelectedWorkout(null);
-      Alert.alert("Success", "Workout has been archived");
+      Alert.alert("Success", "Workout has been removed");
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {
@@ -856,15 +856,15 @@ const WorkoutsScreen = ({ navigation }) => {
                 style={styles.deleteButton}
                 onPress={() => {
                   Alert.alert(
-                    "Archive Workout",
-                    "Are you sure you want to archive this workout?",
+                    "Remove Workout",
+                    "Are you sure you want to remove this workout? you cannot undo this action.",
                     [
                       {
                         text: "Cancel",
                         style: "cancel",
                       },
                       {
-                        text: "Archive",
+                        text: "Remove",
                         onPress: () =>
                           handleSoftDeleteWorkout(selectedWorkout.workoutID),
                       },
@@ -872,8 +872,8 @@ const WorkoutsScreen = ({ navigation }) => {
                   );
                 }}
               >
-                <Ionicons name="archive-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.deleteButtonText}>Archive</Text>
+                <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.deleteButtonText}>Remove</Text>
               </TouchableOpacity>
             </View>
           </View>

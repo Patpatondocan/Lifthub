@@ -538,10 +538,19 @@ const TraineesScreen = () => {
       });
       htmlContent += `</div></body></html>`;
 
+      // Format file name as 'Trainee Report {Date today}'
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      const formattedDate = `${yyyy}-${mm}-${dd}`;
+      const fileName = `Trainee Report ${formattedDate}`;
+
       // Generate PDF using expo-print
       const { uri } = await Print.printToFileAsync({
         html: htmlContent,
         base64: false,
+        fileName: fileName,
       });
       if (uri) {
         if (await Sharing.isAvailableAsync()) {

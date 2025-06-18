@@ -113,8 +113,8 @@ $workoutParams = [
             throw new Exception("Invalid exercise data at position " . ($index + 1));
         }
 
-        $routineSql = "INSERT INTO tbl_routine (workoutID, exerciseName, sets, reps) 
-                       VALUES (?, ?, ?, ?)";
+        $routineSql = "INSERT INTO tbl_routine (workoutID, exerciseName, sets, reps, isActive) 
+                       VALUES (?, ?, ?, ?, 1)";
         $routineParams = [
             $workoutID,
             $exercise['name'],

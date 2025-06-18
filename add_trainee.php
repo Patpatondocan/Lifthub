@@ -71,8 +71,8 @@ try {
         throw new Exception("Selected user is not a member");
     }
 
-    // Check if assignment already exists - FIXED TABLE NAME TO MATCH YOUR SCHEMA
-    $checkAssignmentSql = "SELECT assignmentID FROM tbl_trainerAssignment 
+    // Check if assignment already exists (active or inactive)
+    $checkAssignmentSql = "SELECT assignmentID, isActive FROM tbl_trainerAssignment 
                           WHERE trainerID = ? AND memberID = ?";
     $checkAssignmentParams = array($trainerID, $memberID);
     $checkAssignmentStmt = sqlsrv_query($conn, $checkAssignmentSql, $checkAssignmentParams);
@@ -82,17 +82,28 @@ try {
     }
     
     if (sqlsrv_has_rows($checkAssignmentStmt)) {
-        throw new Exception("This member is already assigned to you");
-    }
-
-    // Insert new assignment - FIXED TABLE NAME TO MATCH YOUR SCHEMA
-    $insertSql = "INSERT INTO tbl_trainerAssignment (trainerID, memberID, assignmentDate) 
-                 VALUES (?, ?, GETDATE())";
-    $insertParams = array($trainerID, $memberID);
-    $insertStmt = sqlsrv_query($conn, $insertSql, $insertParams);
-    
-    if ($insertStmt === false) {
-        throw new Exception("Failed to assign trainee: " . print_r(sqlsrv_errors(), true));
+        $assignmentRow = sqlsrv_fetch_array($checkAssignmentStmt, SQLSRV_FETCH_ASSOC);
+        if (isset($assignmentRow['isActive']) && $assignmentRow['isActive'] == 1) {
+            throw new Exception("This member is already assigned to you");
+        } else {
+            // Reactivate the assignment (soft undelete)
+            $updateSql = "UPDATE tbl_trainerAssignment SET isActive = 1, assignmentDate = GETDATE() WHERE assignmentID = ?";
+            $updateParams = array($assignmentRow['assignmentID']);
+            $updateStmt = sqlsrv_query($conn, $updateSql, $updateParams);
+            if ($updateStmt === false) {
+                throw new Exception("Failed to reactivate assignment: " . print_r(sqlsrv_errors(), true));
+            }
+        }
+    } else {
+        // Insert new assignment
+        $insertSql = "INSERT INTO tbl_trainerAssignment (trainerID, memberID, assignmentDate, isActive) 
+                     VALUES (?, ?, GETDATE(), 1)";
+        $insertParams = array($trainerID, $memberID);
+        $insertStmt = sqlsrv_query($conn, $insertSql, $insertParams);
+        
+        if ($insertStmt === false) {
+            throw new Exception("Failed to assign trainee: " . print_r(sqlsrv_errors(), true));
+        }
     }
 
     // Get the assigned member's details for response
@@ -100,7 +111,7 @@ try {
                         FORMAT(a.assignmentDate, 'yyyy-MM-dd') as assignmentDate
                         FROM tbl_user u
                         JOIN tbl_trainerAssignment a ON u.userID = a.memberID
-                        WHERE a.trainerID = ? AND u.userID = ?";
+                        WHERE a.trainerID = ? AND u.userID = ? AND a.isActive = 1";
     $memberDetailsParams = array($trainerID, $memberID);
     $memberDetailsStmt = sqlsrv_query($conn, $memberDetailsSql, $memberDetailsParams);
     

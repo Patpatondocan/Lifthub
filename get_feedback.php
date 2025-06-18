@@ -44,6 +44,7 @@ try {
     
     // Base SQL query with joins to get user and workout information
     $sql = "SELECT f.feedbackID, f.feedback, f.workoutID, f.userID, 
+                   f.feedbackDate,
                    u.fullName as userName, u.userType,
                    w.workoutName, w.creatorID,
                    creator.fullName as creatorName,
@@ -74,7 +75,12 @@ try {
     
     while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
         error_log("Processing feedback ID: " . $row['feedbackID']);
-        
+        $feedbackDate = null;
+        if (isset($row['feedbackDate']) && $row['feedbackDate'] instanceof DateTime) {
+            $feedbackDate = $row['feedbackDate']->format('c'); // ISO 8601 for JS
+        } elseif (isset($row['feedbackDate'])) {
+            $feedbackDate = $row['feedbackDate'];
+        }
         $feedback[] = array(
             "id" => $row['feedbackID'],
             "text" => $row['feedback'],
@@ -86,7 +92,8 @@ try {
             "type" => $row['workoutID'] ? "workout" : "general",
             "creatorID" => $row['creatorID'] ?? null,
             "creatorName" => $row['creatorName'] ?? null,
-            "creatorType" => $row['creatorType'] ?? null
+            "creatorType" => $row['creatorType'] ?? null,
+            "date" => $feedbackDate
         );
     }
     

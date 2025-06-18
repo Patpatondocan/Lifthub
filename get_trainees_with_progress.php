@@ -68,7 +68,7 @@ try {
                       INNER JOIN 
                         tbl_trainerAssignment ta ON u.userID = ta.memberID
                       WHERE 
-                        ta.trainerID = ?";
+                        ta.trainerID = ? AND ta.isActive = 1";
     
     error_log("Executing trainees query: $traineesQuery with ID: $trainerID");
     $params = array($trainerID);
