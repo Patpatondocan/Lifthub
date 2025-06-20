@@ -38,9 +38,10 @@ try {
         throw new Exception("Connection failed: " . print_r(sqlsrv_errors(), true));
     }
     
-    // Get trainer ID from request if provided (for filtering)
+    // Get trainer ID or user ID from request if provided (for filtering)
     $trainerID = isset($_GET['trainerID']) ? $_GET['trainerID'] : null;
-    
+    $userID = isset($_GET['userID']) ? $_GET['userID'] : null;
+
     if ($trainerID) {
         // Get a specific trainer with their assignments
         $trainerSql = "SELECT userID, userName, fullName, email, contactNum 
@@ -118,6 +119,29 @@ try {
             "workouts" => $workouts,
             "assignedWorkoutCount" => count($workouts),
             "traineeCount" => count($trainees)
+        ]);
+    } else if ($userID) {
+        // Get all trainers assigned to this member (userID)
+        $sql = "SELECT u.userID, u.userName, u.fullName, u.email, u.contactNum
+                FROM tbl_user u
+                JOIN tbl_trainerAssignment ta ON u.userID = ta.trainerID
+                WHERE ta.memberID = ? AND ta.isActive = 1 AND u.userType = 'trainer'
+                GROUP BY u.userID, u.userName, u.fullName, u.email, u.contactNum
+                ORDER BY u.fullName";
+        $params = array($userID);
+        $stmt = sqlsrv_query($conn, $sql, $params);
+        if ($stmt === false) {
+            $errors = sqlsrv_errors();
+            error_log("Assigned trainers query failed: " . print_r($errors, true));
+            throw new Exception("Failed to query assigned trainers: " . $errors[0]['message']);
+        }
+        $trainers = array();
+        while ($trainer = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+            $trainers[] = $trainer;
+        }
+        echo json_encode([
+            "success" => true,
+            "trainers" => $trainers
         ]);
     } else {
         // Get all trainers with trainee counts

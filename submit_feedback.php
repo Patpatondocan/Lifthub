@@ -43,9 +43,24 @@ try {
     $userID = $data['userID'];
     $feedback = $data['feedback'];
     $workoutID = isset($data['workoutID']) ? $data['workoutID'] : null; // Optional workoutID
+    $trainerID = isset($data['trainerID']) ? $data['trainerID'] : null; // Optional trainerID
+    $rating = isset($data['rating']) ? intval($data['rating']) : null; // Optional rating (int)
 
-    // Check if this is a general feedback (no workoutID) or workout-specific feedback
-    if ($workoutID) {
+    // Trainer feedback (direct feedback to trainer)
+    if ($trainerID && $rating) {
+        $insertSql = "INSERT INTO tbl_feedback (userID, feedback, trainerID, rating) VALUES (?, ?, ?, ?)";
+        $insertParams = array($userID, $feedback, $trainerID, $rating);
+        $insertStmt = sqlsrv_query($conn, $insertSql, $insertParams);
+
+        if ($insertStmt === false) {
+            throw new Exception("Failed to insert trainer feedback: " . print_r(sqlsrv_errors(), true));
+        }
+
+        echo json_encode([
+            "success" => true,
+            "message" => "Trainer feedback submitted successfully"
+        ]);
+    } else if ($workoutID) {
         // Workout-specific feedback
         
         // Check if feedback already exists for this workout and update it, otherwise insert new

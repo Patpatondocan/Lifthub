@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { storage } from "../../utils/storage";
 import { logout } from "../../utils/auth";
 import { AuthContext } from "../../context/AuthContext";
+import { Picker } from "@react-native-picker/picker";
 
 const MemberSettingsScreen = ({ setIsLoggedIn }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -25,6 +26,10 @@ const MemberSettingsScreen = ({ setIsLoggedIn }) => {
   const [feedbackText, setFeedbackText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [feedbackType, setFeedbackType] = useState("general"); // 'general' or 'trainer'
+  const [assignedTrainers, setAssignedTrainers] = useState([]);
+  const [selectedTrainer, setSelectedTrainer] = useState(null);
+  const [rating, setRating] = useState(0);
 
   // Access auth context for logout
   const { setIsLoggedIn: contextSetIsLoggedIn } = useContext(AuthContext);
@@ -52,26 +57,64 @@ const MemberSettingsScreen = ({ setIsLoggedIn }) => {
     }
   }, [setIsLoggedIn, contextSetIsLoggedIn]);
 
+  useEffect(() => {
+    // Fetch assigned trainers for the member
+    const fetchAssignedTrainers = async () => {
+      if (!userId) return;
+      try {
+        const response = await fetch(
+          `http://10.0.2.2/lifthub/get_trainers_with_assignments.php?userID=${userId}`
+        );
+        const data = await response.json();
+        if (data.success && data.trainers) {
+          setAssignedTrainers(data.trainers);
+        }
+      } catch (e) {
+        // Ignore error, fallback to general feedback
+      }
+    };
+    if (feedbackType === "trainer") fetchAssignedTrainers();
+  }, [feedbackType, userId]);
+
+  // Only allow trainer feedback if member has a trainer
+  const hasTrainer = assignedTrainers.length > 0;
+  const trainer = hasTrainer ? assignedTrainers[0] : null;
+
   const handleSubmitFeedback = async () => {
     if (!feedbackText.trim() || !userId) {
       Alert.alert("Error", "Please enter your feedback");
       return;
     }
-
+    if (feedbackType === "trainer") {
+      if (!selectedTrainer) {
+        Alert.alert("Error", "Please select a trainer");
+        return;
+      }
+      if (!rating) {
+        Alert.alert("Error", "Please provide a rating");
+        return;
+      }
+    }
     setIsSubmitting(true);
     try {
+      const now = new Date();
+      const feedbackDate = now.toISOString();
+      const body =
+        feedbackType === "trainer"
+          ? {
+              userID: userId,
+              feedback: feedbackText,
+              trainerID: trainer.userID,
+              rating,
+              feedbackDate, // Add date for trainer feedback
+            }
+          : { userID: userId, feedback: feedbackText };
       const response = await fetch(
         "http://10.0.2.2/lifthub/submit_feedback.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            feedback: feedbackText,
-            // For general feedback, workoutID is null (not included)
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         }
       );
 
@@ -79,9 +122,12 @@ const MemberSettingsScreen = ({ setIsLoggedIn }) => {
       if (result.success) {
         setShowFeedbackModal(false);
         setFeedbackText("");
+        setSelectedTrainer(null);
+        setRating(0);
+        setFeedbackType("general");
         Alert.alert("Success", "Your feedback has been submitted. Thank you!");
       } else {
-        throw new Error(result.message);
+        throw new Error(result.message || "Failed to submit feedback");
       }
     } catch (error) {
       Alert.alert("Error", error.message);
@@ -209,12 +255,60 @@ const MemberSettingsScreen = ({ setIsLoggedIn }) => {
                 <Ionicons name="close-circle" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-
             <Text style={styles.modalDescription}>
               We value your feedback! Please let us know how we can improve your
               experience.
             </Text>
-
+            <View style={{ flexDirection: "row", marginBottom: 10 }}>
+              <TouchableOpacity
+                style={{ marginRight: 10 }}
+                onPress={() => setFeedbackType("general")}
+              >
+                <Text
+                  style={{
+                    color: feedbackType === "general" ? "#6397C9" : "#fff",
+                    fontWeight: "bold",
+                  }}
+                >
+                  General
+                </Text>
+              </TouchableOpacity>
+              {hasTrainer && (
+                <TouchableOpacity onPress={() => setFeedbackType("trainer")}>
+                  <Text
+                    style={{
+                      color: feedbackType === "trainer" ? "#6397C9" : "#fff",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Trainer
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {feedbackType === "trainer" && hasTrainer && (
+              <>
+                <Text style={{ color: "#fff", marginBottom: 5 }}>
+                  Trainer: {trainer.fullName}
+                </Text>
+                <Text style={{ color: "#fff", marginBottom: 5 }}>Rating</Text>
+                <View style={{ flexDirection: "row", marginBottom: 10 }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => setRating(star)}
+                    >
+                      <Ionicons
+                        name={star <= rating ? "star" : "star-outline"}
+                        size={28}
+                        color={star <= rating ? "#FFD700" : "#666"}
+                        style={{ marginHorizontal: 2 }}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
             <TextInput
               style={styles.feedbackInput}
               placeholder="Enter your feedback here..."
@@ -224,7 +318,6 @@ const MemberSettingsScreen = ({ setIsLoggedIn }) => {
               multiline
               numberOfLines={5}
             />
-
             <TouchableOpacity
               style={[
                 styles.submitButton,

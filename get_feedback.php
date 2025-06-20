@@ -42,17 +42,19 @@ try {
     $filterType = isset($_GET['filter']) ? $_GET['filter'] : 'all';
     error_log("Filter type: " . $filterType);
     
-    // Base SQL query with joins to get user and workout information
-    $sql = "SELECT f.feedbackID, f.feedback, f.workoutID, f.userID, 
+    // Base SQL query with joins to get user, workout, and trainer feedback information
+    $sql = "SELECT f.feedbackID, f.feedback, f.workoutID, f.userID, f.trainerID, f.rating, 
                    f.feedbackDate,
                    u.fullName as userName, u.userType,
                    w.workoutName, w.creatorID,
                    creator.fullName as creatorName,
-                   creator.userType as creatorType
+                   creator.userType as creatorType,
+                   t.fullName as trainerName
             FROM tbl_feedback f
             JOIN tbl_user u ON f.userID = u.userID
             LEFT JOIN tbl_workout w ON f.workoutID = w.workoutID
-            LEFT JOIN tbl_user creator ON w.creatorID = creator.userID";
+            LEFT JOIN tbl_user creator ON w.creatorID = creator.userID
+            LEFT JOIN tbl_user t ON f.trainerID = t.userID";
     
     // Apply filter
     if ($filterType === 'general') {
@@ -89,18 +91,43 @@ try {
             "userID" => $row['userID'],
             "userName" => $row['userName'],
             "userType" => $row['userType'],
-            "type" => $row['workoutID'] ? "workout" : "general",
+            "type" => $row['workoutID'] ? "workout" : ($row['trainerID'] ? "trainer" : "general"),
             "creatorID" => $row['creatorID'] ?? null,
             "creatorName" => $row['creatorName'] ?? null,
             "creatorType" => $row['creatorType'] ?? null,
+            "trainerID" => $row['trainerID'] ?? null,
+            "trainerName" => $row['trainerName'] ?? null,
+            "rating" => $row['rating'] ?? null,
             "date" => $feedbackDate
         );
     }
-    
+    // Aggregate trainer ratings and feedback counts
+    $trainerStats = array();
+    foreach ($feedback as $fb) {
+        if ($fb['trainerID']) {
+            $tid = $fb['trainerID'];
+            if (!isset($trainerStats[$tid])) {
+                $trainerStats[$tid] = [
+                    'trainerID' => $tid,
+                    'trainerName' => $fb['trainerName'],
+                    'totalRating' => 0,
+                    'count' => 0
+                ];
+            }
+            if ($fb['rating']) {
+                $trainerStats[$tid]['totalRating'] += intval($fb['rating']);
+                $trainerStats[$tid]['count']++;
+            }
+        }
+    }
+    foreach ($trainerStats as $tid => $stat) {
+        $trainerStats[$tid]['averageRating'] = $stat['count'] > 0 ? round($stat['totalRating'] / $stat['count'], 2) : null;
+    }
     error_log("Total feedback items: " . count($feedback));
     echo json_encode([
         "success" => true,
-        "feedback" => $feedback
+        "feedback" => $feedback,
+        "trainerStats" => array_values($trainerStats)
     ]);
     
 } catch (Exception $e) {

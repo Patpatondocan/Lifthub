@@ -35,55 +35,76 @@ const FeedbackSection = () => {
     default: "http://localhost/lifthub",
   });
 
+  // Add the missing functions and state
+  const [trainerStats, setTrainerStats] = useState([]);
+
   // Fetch feedback data on component mount and when filter changes
   useEffect(() => {
     fetchFeedback();
   }, [activeFilter]);
 
-  // Filter feedback when search query changes
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredFeedback(feedback);
-    } else {
-      const filtered = feedback.filter(
-        (item) =>
-          item.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.workoutName &&
-            item.workoutName.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-      setFilteredFeedback(filtered);
-    }
-  }, [searchQuery, feedback]);
-
-  // Fetch feedback data from API
+  // Update the fetchFeedback function to include trainerStats
   const fetchFeedback = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
       const response = await fetch(
         `${API_BASE_URL}/get_feedback.php?filter=${activeFilter}`
       );
-
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
       const data = await response.json();
-
       if (data.success) {
         setFeedback(data.feedback);
         setFilteredFeedback(data.feedback);
+        setTrainerStats(data.trainerStats || []);
       } else {
         throw new Error(data.error || "Failed to fetch feedback");
       }
-    } catch (err) {
-      console.error("Error fetching feedback:", err);
-      setError(err.message);
+    } catch (error) {
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Add the missing filter functions
+  const filterTrainerFeedback = (feedbackList) =>
+    feedbackList.filter((item) => item.type === "trainer");
+
+  // Update the filter effect
+  useEffect(() => {
+    let filtered = feedback;
+    if (activeFilter === "trainer") {
+      filtered = filterTrainerFeedback(feedback);
+    } else if (activeFilter === "general") {
+      filtered = feedback.filter((item) => item.type === "general");
+    } else if (activeFilter === "workout") {
+      filtered = feedback.filter((item) => item.type === "workout");
+    }
+    if (searchQuery.trim() !== "") {
+      filtered = filtered.filter(
+        (item) =>
+          item.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.workoutName &&
+            item.workoutName
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())) ||
+          (item.trainerName &&
+            item.trainerName.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    setFilteredFeedback(filtered);
+  }, [searchQuery, feedback, activeFilter]);
+
+  // Add the print function
+  const printFeedback = () => {
+    const printable = document.getElementById("printable-feedback");
+    if (printable) printable.style.display = "block";
+    window.print();
+    if (printable) printable.style.display = "none";
   };
 
   // Handler for filter buttons
@@ -137,36 +158,6 @@ const FeedbackSection = () => {
     }
   };
 
-  // Inject print CSS for printable section (web only)
-  useEffect(() => {
-    if (Platform.OS === "web") {
-      const style = document.createElement("style");
-      style.innerHTML = `
-        #printable-feedback { display: none; }
-        @media print {
-          body * { display: none !important; }
-          #printable-feedback, #printable-feedback * {
-            display: block !important;
-            color: #000 !important;
-            background: #fff !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-      return () => {
-        document.head.removeChild(style);
-      };
-    }
-  }, []);
-
-  // Print feedback (web only)
-  const printFeedback = () => {
-    const printable = document.getElementById("printable-feedback");
-    if (printable) printable.style.display = "block";
-    window.print();
-    if (printable) printable.style.display = "none";
-  };
-
   // Filter button component
   const FilterButton = ({ title, value }) => (
     <TouchableOpacity
@@ -214,6 +205,20 @@ const FeedbackSection = () => {
                 {item.userType === "member" ? "Member" : "Trainer"}
               </Text>
             </View>
+            {item.type === "trainer" && item.trainerName && (
+              <Text
+                style={{ color: "#FFD700", fontWeight: "bold", marginTop: 2 }}
+              >
+                For Trainer: {item.trainerName}
+              </Text>
+            )}
+            {item.type === "trainer" && item.rating && (
+              <Text
+                style={{ color: "#FFD700", fontWeight: "bold", marginTop: 2 }}
+              >
+                Rating: {item.rating} ★
+              </Text>
+            )}
           </View>
         </View>
 
@@ -228,6 +233,13 @@ const FeedbackSection = () => {
             )}
           </View>
         )}
+      </View>
+
+      {/* Add the date back */}
+      <View style={{ marginBottom: 10 }}>
+        <Text style={{ color: "#888888", fontSize: 12 }}>
+          {item.date ? new Date(item.date).toLocaleString() : "N/A"}
+        </Text>
       </View>
 
       <Text style={styles.feedbackText}>{item.text}</Text>
@@ -302,15 +314,29 @@ const FeedbackSection = () => {
         {/* Header with search bar */}
         <View style={styles.headerTop}>
           <Text style={styles.title}>User Feedback</Text>
-          {/* Print Button (web only) */}
+          {/* Print & PDF Buttons (web only) */}
           {Platform.OS === "web" && (
-            <TouchableOpacity
-              style={[styles.submitButton, { marginLeft: 20 }]}
-              onPress={printFeedback}
-            >
-              <Ionicons name="print-outline" size={20} color="#FFF" />
-              <Text style={styles.submitButtonText}>Print Feedback</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row" }}>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  {
+                    marginLeft: 20,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  },
+                ]}
+                onPress={printFeedback}
+              >
+                <Ionicons
+                  name="print-outline"
+                  size={20}
+                  color="#FFF"
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.submitButtonText}>Print Feedback</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -343,6 +369,7 @@ const FeedbackSection = () => {
         <FilterButton title="All Feedback" value="all" />
         <FilterButton title="General" value="general" />
         <FilterButton title="Workout" value="workout" />
+        <FilterButton title="Trainer" value="trainer" />
       </View>
 
       {/* Feedback list */}
@@ -433,7 +460,6 @@ const FeedbackSection = () => {
           </View>
         </View>
       </Modal>
-
       {/* Hidden printable section for web using portal */}
       {Platform.OS === "web" &&
         typeof window !== "undefined" &&
@@ -444,36 +470,262 @@ const FeedbackSection = () => {
               display: "none",
               background: "#fff",
               color: "#000",
-              padding: 32,
+              padding: "20mm",
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "210mm",
+              minHeight: "297mm",
+              maxWidth: "210mm",
+              boxSizing: "border-box",
+              zIndex: 9999,
+              margin: "0 auto",
+              fontFamily: "Arial, sans-serif",
             }}
           >
-            <h1 style={{ textAlign: "center" }}>Feedback Reports</h1>
-            {filteredFeedback.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                style={{
-                  marginBottom: 24,
-                  borderBottom: "1px solid #ccc",
-                  paddingBottom: 12,
-                }}
-              >
-                <div>
-                  <strong>User:</strong> {item.userName} ({item.userType})
-                </div>
-                {item.workoutName && (
-                  <div>
-                    <strong>Workout:</strong> {item.workoutName}
-                  </div>
-                )}
-                <div>
-                  <strong>Date:</strong>{" "}
-                  {item.date ? new Date(item.date).toLocaleString() : "N/A"}
-                </div>
-                <div>
-                  <strong>Feedback:</strong> {item.text}
-                </div>
-              </div>
-            ))}
+            <h1
+              style={{
+                textAlign: "center",
+                fontSize: "24px",
+                fontWeight: "bold",
+                marginBottom: "20px",
+                color: "#000",
+              }}
+            >
+              Feedback Report
+            </h1>
+            <h2
+              style={{
+                fontSize: "18px",
+                fontWeight: "bold",
+                marginBottom: "15px",
+                color: "#000",
+              }}
+            >
+              Feedback Details
+            </h2>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                border: "2px solid #000",
+                marginBottom: "20px",
+                fontSize: "12px",
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: "#f0f0f0" }}>
+                  <th
+                    style={{
+                      border: "1px solid #000",
+                      padding: "8px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      textAlign: "left",
+                      width: "15%",
+                    }}
+                  >
+                    User
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #000",
+                      padding: "8px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      textAlign: "left",
+                      width: "10%",
+                    }}
+                  >
+                    Type
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #000",
+                      padding: "8px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      textAlign: "left",
+                      width: "15%",
+                    }}
+                  >
+                    Date
+                  </th>
+                  <th
+                    style={{
+                      border: "1px solid #000",
+                      padding: "8px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                      textAlign: "left",
+                      width: "60%",
+                    }}
+                  >
+                    Feedback
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFeedback.map((item, idx) => (
+                  <tr
+                    key={item.id || idx}
+                    style={{
+                      backgroundColor: idx % 2 === 0 ? "#fff" : "#f9f9f9",
+                      pageBreakInside: "avoid",
+                    }}
+                  >
+                    <td
+                      style={{
+                        border: "1px solid #000",
+                        padding: "8px",
+                        fontSize: "12px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      {item.userName || "N/A"}
+                    </td>
+                    <td
+                      style={{
+                        border: "1px solid #000",
+                        padding: "8px",
+                        fontSize: "12px",
+                        verticalAlign: "top",
+                      }}
+                    >
+                      {item.userType === "member" ? "Member" : "Trainer"}
+                    </td>
+                    <td
+                      style={{
+                        border: "1px solid #000",
+                        padding: "8px",
+                        fontSize: "12px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      {item.date
+                        ? new Date(item.date).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                    <td
+                      style={{
+                        border: "1px solid #000",
+                        padding: "8px",
+                        fontSize: "12px",
+                        verticalAlign: "top",
+                        wordWrap: "break-word",
+                        maxWidth: "300px",
+                      }}
+                    >
+                      {item.text || "No feedback provided"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Trainer stats summary if available */}
+            {trainerStats.length > 0 && (
+              <>
+                <h2
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    marginBottom: "15px",
+                    color: "#000",
+                  }}
+                >
+                  Trainer Ratings Summary
+                </h2>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    border: "2px solid #000",
+                    fontSize: "12px",
+                  }}
+                >
+                  <thead>
+                    <tr style={{ backgroundColor: "#f0f0f0" }}>
+                      <th
+                        style={{
+                          border: "1px solid #000",
+                          padding: "8px",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          textAlign: "left",
+                        }}
+                      >
+                        Trainer
+                      </th>
+                      <th
+                        style={{
+                          border: "1px solid #000",
+                          padding: "8px",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          textAlign: "left",
+                        }}
+                      >
+                        Average Rating
+                      </th>
+                      <th
+                        style={{
+                          border: "1px solid #000",
+                          padding: "8px",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          textAlign: "left",
+                        }}
+                      >
+                        Feedback Count
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trainerStats.map((stat, idx) => (
+                      <tr
+                        key={idx}
+                        style={{
+                          backgroundColor: idx % 2 === 0 ? "#fff" : "#f9f9f9",
+                        }}
+                      >
+                        <td
+                          style={{
+                            border: "1px solid #000",
+                            padding: "8px",
+                            fontSize: "12px",
+                            verticalAlign: "top",
+                          }}
+                        >
+                          {stat.trainerName}
+                        </td>
+                        <td
+                          style={{
+                            border: "1px solid #000",
+                            padding: "8px",
+                            fontSize: "12px",
+                            verticalAlign: "top",
+                          }}
+                        >
+                          {stat.averageRating ?? "-"}
+                        </td>
+                        <td
+                          style={{
+                            border: "1px solid #000",
+                            padding: "8px",
+                            fontSize: "12px",
+                            verticalAlign: "top",
+                          }}
+                        >
+                          {stat.count}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
           </div>,
           document.body
         )}
@@ -557,15 +809,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }
-      : {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        }),
   },
   feedbackHeader: {
     flexDirection: "row",
@@ -706,15 +954,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     maxHeight: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
     elevation: 5,
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0 5px 10px rgba(0,0,0,0.3)" }
-      : {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: 0.3,
-          shadowRadius: 10,
-        }),
   },
   modalHeader: {
     flexDirection: "row",
@@ -826,15 +1070,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     alignItems: "center",
+    shadowColor: "#6397C9",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     elevation: 3,
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0 2px 4px rgba(99,151,201,0.3)" }
-      : {
-          shadowColor: "#6397C9",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-        }),
   },
   submitButtonText: {
     color: "#FFFFFF",

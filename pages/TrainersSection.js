@@ -31,6 +31,7 @@ const TrainersSection = () => {
   const [traineeToRemove, setTraineeToRemove] = useState(null);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [selectedTrainerDetails, setSelectedTrainerDetails] = useState(null);
+  const [trainerStats, setTrainerStats] = useState([]);
 
   // API base URL based on platform
   const API_BASE_URL = Platform.select({
@@ -66,48 +67,38 @@ const TrainersSection = () => {
       const response = await fetch(
         `${API_BASE_URL}/get_trainers_with_assignments.php`
       );
-
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
       const data = await response.json();
-
+      console.log("Trainers API response:", data);
+      // Fetch feedback stats for trainers
+      const feedbackRes = await fetch(
+        `${API_BASE_URL}/get_feedback.php?filter=all`
+      );
+      const feedbackData = await feedbackRes.json();
+      console.log("Feedback API response:", feedbackData);
+      let stats = {};
+      if (feedbackData.success && feedbackData.trainerStats) {
+        feedbackData.trainerStats.forEach((stat) => {
+          stats[stat.trainerID] = stat;
+        });
+      }
       if (data.success) {
-        setTrainers(data.trainers || []);
-        setFilteredTrainers(data.trainers || []);
+        // Attach rating/count to each trainer
+        const trainersWithStats = (data.trainers || []).map((tr) => ({
+          ...tr,
+          averageRating: stats[tr.userID]?.averageRating ?? null,
+          feedbackCount: stats[tr.userID]?.count ?? 0,
+        }));
+        setTrainers(trainersWithStats);
+        setFilteredTrainers(trainersWithStats);
       } else {
         throw new Error(data.message || "Failed to fetch trainers");
       }
     } catch (error) {
-      console.error("Error fetching trainers:", error);
-      Alert.alert("Error", "Failed to load trainers. Please try again later.");
-
-      // Mock data for development
-      if (__DEV__) {
-        const mockTrainers = [
-          {
-            userID: "1",
-            userName: "trainer1",
-            fullName: "John Smith",
-            email: "john@example.com",
-            contactNum: "123-456-7890",
-            traineeCount: 5,
-            assignedWorkoutCount: 12,
-          },
-          {
-            userID: "2",
-            userName: "trainer2",
-            fullName: "Sarah Johnson",
-            email: "sarah@example.com",
-            contactNum: "987-654-3210",
-            traineeCount: 3,
-            assignedWorkoutCount: 8,
-          },
-        ];
-        setTrainers(mockTrainers);
-        setFilteredTrainers(mockTrainers);
-      }
+      setTrainers([]);
+      setFilteredTrainers([]);
     } finally {
       setIsLoading(false);
     }
@@ -243,6 +234,22 @@ const TrainersSection = () => {
           <Ionicons name="barbell-outline" size={18} color="#6397C9" />
           <Text style={styles.statValue}>{item.assignedWorkoutCount}</Text>
           <Text style={styles.statLabel}>Workouts</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Ionicons name="star" size={18} color="#FFD700" />
+          <Text style={styles.statValue}>
+            {item.averageRating !== null ? item.averageRating : "-"}
+          </Text>
+          <Text style={styles.statLabel}>Avg Rating</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={18}
+            color="#6397C9"
+          />
+          <Text style={styles.statValue}>{item.feedbackCount}</Text>
+          <Text style={styles.statLabel}>Feedbacks</Text>
         </View>
       </View>
 
